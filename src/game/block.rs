@@ -1,22 +1,22 @@
-use super::{HexCoord, Object, ObjectType};
+use super::{HexCoord, BlockType};
 
 #[derive(Copy, Clone, Debug)]
 pub struct Block {
     pub coord: HexCoord,
-    pub object: Option<Object>,
+    pub btype: BlockType,
 }
 
 impl Block {
-    pub fn with(otype: ObjectType, coord: HexCoord) -> Block {
+    pub fn new(coord: HexCoord, btype: BlockType) -> Block {
         Block {
             coord,
-            object: Some(Object::new(otype)),
+            btype,
         }
     }
     pub fn empty(coord: HexCoord) -> Block {
         Block {
             coord,
-            object: None,
+            btype: BlockType::Ground,
         }
     }
 }

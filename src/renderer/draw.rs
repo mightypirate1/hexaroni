@@ -1,9 +1,8 @@
 use macroquad::prelude::*;
 use crate::game::{Tile, Object, ObjectType};
-use super::ScreenCoord;
 
-pub fn tile(tile: &Tile) {
-    let screen_coord = ScreenCoord::from_hexcoord(&tile.coord);
+pub fn tile(tile: &Tile, time: f32) {
+    let screen_coord = tile.animation.get_coord(time);
     draw_hexagon(
         screen_coord.x,
         screen_coord.y,
@@ -15,13 +14,13 @@ pub fn tile(tile: &Tile) {
     );
 }
 
-pub fn object(object: &Object) {
+pub fn object(object: &Object, time: f32) {
     let color = match object.otype {
         ObjectType::Jumper => Color::from_hex(0xb04311),
         ObjectType::Dasher => Color::from_hex(0x6122c7),
         ObjectType::Wall => Color::from_hex(0x111111),
     };
-    let screen_coord = ScreenCoord::from_hexcoord(&object.coord);
+    let screen_coord = object.animation.get_coord(time);
     draw_circle(screen_coord.x, screen_coord.y, 0.75 * screen_coord.screen_size, color);
 }
 

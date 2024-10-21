@@ -1,5 +1,5 @@
 use macroquad::prelude::*;
-use hexaroni::game::{Game, Block, HexCoord, Object, ObjectType};
+use hexaroni::game::{Game, Tile, HexCoord, Object, ObjectType};
 
 
 fn window_conf() -> Conf {
@@ -27,8 +27,8 @@ fn to_screen_coord(coord: &HexCoord, size: f32) -> (f32, f32) {
 }
 
 
-fn draw_block(block: &Block, size: f32) {
-    let (x, y) = to_screen_coord(&block.coord, size);
+fn draw_tile(tile: &Tile, size: f32) {
+    let (x, y) = to_screen_coord(&tile.coord, size);
     draw_hexagon(
         x,
         y,
@@ -58,8 +58,8 @@ async fn main() {
     loop {
         clear_background(Color::new(0.2, 0.15, 0.22, 1.0));
         let size = screen_size(game.board.size);
-        for block in game.board.blocks.iter() {
-            draw_block(block, size);
+        for tile in game.board.tiles.iter() {
+            draw_tile(tile, size);
         }
         for object in game.board.objects.iter() {
             draw_object(object, size);

@@ -1,19 +1,19 @@
-use super::{HexCoord, Block, Object, ObjectType};
+use super::{HexCoord, Tile, Object, ObjectType};
 
 pub struct Board {
     pub size: usize,
-    pub blocks: Vec<Block>,
+    pub tiles: Vec<Tile>,
     pub objects: Vec<Object>,
 }
 
 impl Board {
     pub fn new(size: usize) -> Board {
-        let blocks: Vec<Block> = (0..size)
+        let tiles: Vec<Tile> = (0..size)
             .map(|x| {
-                let row: Vec<Block> = (0..size)
+                let row: Vec<Tile> = (0..size)
                     .map(|y| {
                         let coord = HexCoord::create(x, y, size);
-                        Block::empty(coord)
+                        Tile::empty(coord)
                     })
                     .collect();
                 row
@@ -21,21 +21,21 @@ impl Board {
             .flatten()
             .collect();
 
-        let objects = blocks
+        let objects = tiles
             .iter()
-            .filter(|b| {
-                (23 - b.coord.x + 2 * b.coord.y) % 7 < 3
+            .filter(|t| {
+                (23 - t.coord.x + 2 * t.coord.y) % 7 < 3
             })
             .enumerate()
-            .map(|(i, b)| {
+            .map(|(i, t)| {
                 match i % 3 {
-                    0 => Object::new(ObjectType::Dasher, b.coord),
-                    1 => Object::new(ObjectType::Jumper, b.coord),
-                    _ => Object::new(ObjectType::Wall, b.coord),
+                    0 => Object::new(ObjectType::Dasher, t.coord),
+                    1 => Object::new(ObjectType::Jumper, t.coord),
+                    _ => Object::new(ObjectType::Wall, t.coord),
                 }
             })
             .collect();
-        Board {size, blocks, objects}
+        Board {size, tiles, objects}
     }
 
     pub fn render(&self) -> String {

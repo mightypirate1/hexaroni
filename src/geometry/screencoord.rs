@@ -1,5 +1,5 @@
 use macroquad::prelude::*;
-use crate::game::HexCoord;
+use super::HexCoord;
 
 
 #[derive(Copy, Clone, Debug)]
@@ -11,12 +11,20 @@ pub struct ScreenCoord {
 
 
 impl ScreenCoord {
+    pub fn new(x: f32, y:f32, board_size: usize) -> ScreenCoord {
+        ScreenCoord {
+            x,
+            y,
+            screen_size: ScreenCoord::screen_size(board_size),
+        }
+    }
+
     pub fn from_hexcoord(coord: &HexCoord) -> ScreenCoord {
         let screen_size = ScreenCoord::screen_size(coord.board_size);
         let offset_x = screen_size * (1 + coord.y) as f32;
         let offset_y = 2.0 * screen_size;
-        let x = offset_x + (2.0 * screen_size * coord.x as f32);
-        let y = offset_y + (2.0 * screen_size * coord.y as f32);
+        let x = offset_x + (2.05 * screen_size * coord.x as f32);
+        let y = offset_y + (1.95 * screen_size * coord.y as f32);
         ScreenCoord {x, y, screen_size}
     }
 
@@ -24,6 +32,14 @@ impl ScreenCoord {
         ScreenCoord {
             x: self.x + other.x,
             y: self.y + other.y,
+            screen_size: self.screen_size,
+        }
+    }
+
+    pub fn add_v(&self, vec: Vec2) -> ScreenCoord {
+        ScreenCoord {
+            x: self.x + vec.x,
+            y: self.y + vec.y,
             screen_size: self.screen_size,
         }
     }

@@ -1,4 +1,5 @@
+pub mod draw;
+pub mod renderables;
 mod animation;
-mod renderable;
 
 pub use animation::Animation;

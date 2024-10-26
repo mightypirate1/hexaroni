@@ -1,15 +1,10 @@
 mod game;
 mod board;
-mod hexcoord;
-mod tile;
-mod object;
-mod object_type;
+mod objects;
 mod tile_type;
+pub mod statuses;
 
 pub use game::Game;
 pub use board::Board;
-pub use hexcoord::HexCoord;
-pub use tile::Tile;
-pub use object::Object;
-pub use object_type::ObjectType;
+pub use objects::{Object, ObjectType, ObjectProps};
 pub use tile_type::TileType;

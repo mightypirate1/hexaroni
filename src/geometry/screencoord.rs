@@ -28,6 +28,12 @@ impl ScreenCoord {
         ScreenCoord {x, y, screen_size}
     }
 
+
+    pub fn mouse_pos(board_size: usize) -> ScreenCoord {
+        let (x, y) = mouse_position();
+        ScreenCoord::new(x, y, board_size)
+    }
+
     pub fn is_close(&self, other: ScreenCoord) -> bool {
         let delta = self.sub(&other);
         let distance_sq = delta.x.powi(2) + delta.y.powi(2);

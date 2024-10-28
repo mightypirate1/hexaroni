@@ -1,6 +1,6 @@
 pub mod draw;
-pub mod renderables;
 pub mod rendering;
+pub mod control;
 mod animation;
 
 pub use animation::Animation;

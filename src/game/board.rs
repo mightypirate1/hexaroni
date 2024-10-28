@@ -9,21 +9,23 @@ pub struct Board {
 
 impl Board {
     pub fn new(size: usize) -> Board {
-        let mut oid = 0;
+        /*
+          Remember that everythin breaks if object ids are non-unique
+         */
+
         let tiles: Vec<Object> = (0..size)
             .map(move |x| {
                 (0..size)
                 .map(move |y| {
-                        oid += 1;
                         let coord = HexCoord::create(x, y, size);
-                        Object::new_tile(oid, coord)
+                        Object::new_tile(y * size + x, coord)
                     }
                 )
             })
             .flatten()
             .collect();
         
-        oid = tiles.len();
+        let mut oid = tiles.len();
         let pieces: Vec<Object> = tiles
             .iter()
             .filter(|t| {

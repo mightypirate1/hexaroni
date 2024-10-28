@@ -18,6 +18,13 @@ pub struct Object {
 }
 
 
+impl PartialEq for Object {
+    fn eq(&self, other: &Self) -> bool {
+        self.props.oid == other.props.oid
+    }
+}
+
+
 impl Object {
     pub fn new(oid: usize, otype: ObjectType, coord: HexCoord) -> Object {
         Object {

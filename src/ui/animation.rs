@@ -30,7 +30,7 @@ impl Animation {
                     from.clone()
                 } else {
                     let delta = to.sub(&from);
-                    from.add(&delta.scale(progress))
+                    from.add(&delta.scale(f32::powi(progress, 2)))
                 }
             },
             Animation::Wobble { pos, amplitude, start_time , speed} => {

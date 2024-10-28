@@ -13,7 +13,6 @@ impl Game {
 
     pub fn move_to(&mut self, object: &Object, to: HexCoord, time: f32, duration: f32) {
         if let Some(obj) = self.get_obj_mut(&object) {
-            obj.move_to(to);
             obj.animation = Some(
                 Animation::Move {
                     from: obj.pos,
@@ -22,6 +21,7 @@ impl Game {
                     duration,
                 }
             );
+            obj.move_to(to);
         }
     }
 

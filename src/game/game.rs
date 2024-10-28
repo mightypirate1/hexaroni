@@ -35,7 +35,6 @@ impl Game {
         self.board.objects.iter_mut().find(|o| o.props.oid == object.props.oid)
     }
 
-
     pub fn get_object_at_pos(&self, pos: ScreenCoord) -> Option<Object> {
         self.board.objects
             .iter()

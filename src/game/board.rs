@@ -22,7 +22,8 @@ impl Board {
             })
             .flatten()
             .collect();
-
+        
+        oid = tiles.len();
         let pieces: Vec<Object> = tiles
             .iter()
             .filter(|t| {
@@ -39,9 +40,5 @@ impl Board {
             })
             .collect();
         Board {size, objects: tiles.into_iter().chain(pieces).collect()}
-    }
-
-    pub fn render(&self) -> String {
-        format!("Game[size={}]", self.size)
     }
 }

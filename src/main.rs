@@ -1,6 +1,6 @@
-use std::time::{Duration, Instant};
+use std::time::Instant;
 use macroquad::prelude::*;
-use hexaroni::game::{Game, Object, ObjectType};
+use hexaroni::game::{Game, Object};
 use hexaroni::ui::rendering;
 use hexaroni::geometry::ScreenCoord;
 
@@ -37,12 +37,13 @@ fn window_conf() -> Conf {
 
 #[macroquad::main(window_conf)]
 async fn main() {
-    let pixelization = 1.0;
+    let render_scale = 4.0;
     let render_target = render_target(
-        (screen_width() / pixelization) as u32,
-        (screen_height() / pixelization) as u32,
+        (render_scale * screen_width()) as u32,
+        (render_scale * screen_height()) as u32,
     );
-    render_target.texture.set_filter(FilterMode::Nearest);
+    render_target.texture.set_filter(FilterMode::Linear);
+    // render_target.texture.set_filter(FilterMode::Nearest);
 
     let start_time = Instant::now();
     let mut game = Game::new();
@@ -60,8 +61,8 @@ async fn main() {
         
         // read mouse status
         control_status.mouse_pos = get_mouse_pos(&game);
-        control_status.targeting = get_tile_at_pos(control_status.mouse_pos, &game);
-        control_status.hovering = get_object_at_pos(control_status.mouse_pos, &game);
+        control_status.targeting = game.get_tile_at_pos(control_status.mouse_pos);
+        control_status.hovering = game.get_object_at_pos(control_status.mouse_pos);
         control_status.action = update_mouse_action(&control_status);
 
         // handle events
@@ -120,34 +121,4 @@ fn update_mouse_action(status: &ControlStatus) -> MouseAction {
         return status.action.clone();
     }
     MouseAction::None
-}
-
-fn get_object_at_pos(pos: ScreenCoord, game: &Game) -> Option<Object> {
-    game.board.objects
-        .iter()
-        .find(|o| {
-            match o.otype {
-                ObjectType::Tile => false,
-                _ => is_close(pos, o.pos),
-            }
-        })
-        .cloned()
-}
-
-fn get_tile_at_pos(pos: ScreenCoord, game: &Game) -> Option<Object> {   
-    game.board.objects
-        .iter()
-        .find(|o| {
-            match o.otype {
-                ObjectType::Tile => is_close(pos, o.pos),
-                _ => false,
-            }
-        })
-        .cloned()
-}
-
-fn is_close(me: ScreenCoord, other: ScreenCoord) -> bool {
-    let delta = me.sub(&other);
-    let distance_sq = delta.x.powi(2) + delta.y.powi(2);
-    distance_sq < 0.75 * me.screen_size.powi(2)
 }

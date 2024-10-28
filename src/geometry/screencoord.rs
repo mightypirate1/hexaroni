@@ -28,6 +28,12 @@ impl ScreenCoord {
         ScreenCoord {x, y, screen_size}
     }
 
+    pub fn is_close(&self, other: ScreenCoord) -> bool {
+        let delta = self.sub(&other);
+        let distance_sq = delta.x.powi(2) + delta.y.powi(2);
+        distance_sq < 0.75 * self.screen_size.powi(2)
+    }
+
     pub fn add(&self, other: &ScreenCoord) -> ScreenCoord {
         ScreenCoord {
             x: self.x + other.x,

@@ -1,4 +1,4 @@
-use super::{Board, Object};
+use super::{Board, Object, ObjectType};
 use crate::ui::Animation;
 use crate::geometry::{HexCoord, ScreenCoord};
 
@@ -33,6 +33,31 @@ impl Game {
 
     pub fn get_obj_mut(&mut self, object: &Object) -> Option<&mut Object> {
         self.board.objects.iter_mut().find(|o| o.props.oid == object.props.oid)
+    }
+
+
+    pub fn get_object_at_pos(&self, pos: ScreenCoord) -> Option<Object> {
+        self.board.objects
+            .iter()
+            .find(|o| {
+                match o.otype {
+                    ObjectType::Tile => false,
+                    _ => pos.is_close(o.pos),
+                }
+            })
+            .cloned()
+    }
+
+    pub fn get_tile_at_pos(&self, pos: ScreenCoord) -> Option<Object> {   
+        self.board.objects
+            .iter()
+            .find(|o| {
+                match o.otype {
+                    ObjectType::Tile => pos.is_close(o.pos),
+                    _ => false,
+                }
+            })
+            .cloned()
     }
 
     /**

@@ -1,7 +1,7 @@
-use std::time::Instant;
+use std::time::{Duration, Instant};
 use macroquad::prelude::*;
 use hexaroni::game::{Game, Object, ObjectType};
-use hexaroni::ui::draw;
+use hexaroni::ui::rendering;
 use hexaroni::geometry::ScreenCoord;
 
 
@@ -37,7 +37,13 @@ fn window_conf() -> Conf {
 
 #[macroquad::main(window_conf)]
 async fn main() {
-    // set_fullscreen(true);
+    let pixelization = 1.0;
+    let render_target = render_target(
+        (screen_width() / pixelization) as u32,
+        (screen_height() / pixelization) as u32,
+    );
+    render_target.texture.set_filter(FilterMode::Nearest);
+
     let start_time = Instant::now();
     let mut game = Game::new();
     let mut control_status = ControlStatus {
@@ -63,9 +69,11 @@ async fn main() {
             MouseAction::Dragging => {
                 if let Some(ref dragged) = control_status.dragging {
                     game.set_pos(&dragged, control_status.mouse_pos);
-                } else if let Some(ref dragged) = control_status.hovering {
-                    control_status.dragging = control_status.hovering.clone();
-                    game.set_pos(&dragged, control_status.mouse_pos);
+                } else if let Some(ref hovered) = control_status.hovering {
+                    if hovered.props.draggable {
+                        control_status.dragging = Some(hovered.clone());
+                        game.set_pos(&hovered, control_status.mouse_pos);
+                    }
                 }
             },
             MouseAction::Drop => {
@@ -73,7 +81,7 @@ async fn main() {
                     if let Some(target) = &control_status.targeting {
                         game.move_to(object, target.coord, curr_time, 0.1);
                     } else {
-                        game.move_to(object, object.coord, curr_time, 3.1);
+                        game.move_to(object, object.coord, curr_time, 0.1);
                     }
                 }
                 control_status.dragging = None;
@@ -81,8 +89,8 @@ async fn main() {
             _ => {},
         }
 
-        render(&game, curr_time);
-        next_frame().await
+        rendering::render(&game, curr_time, &render_target);
+        next_frame().await;
     }
 }
 
@@ -136,15 +144,10 @@ fn get_tile_at_pos(pos: ScreenCoord, game: &Game) -> Option<Object> {
             }
         })
         .cloned()
- 
 }
 
 fn is_close(me: ScreenCoord, other: ScreenCoord) -> bool {
     let delta = me.sub(&other);
     let distance_sq = delta.x.powi(2) + delta.y.powi(2);
     distance_sq < 0.75 * me.screen_size.powi(2)
-}
-
-fn render(game: &Game, time: f32) {
-    draw::render_game(game, time);
 }

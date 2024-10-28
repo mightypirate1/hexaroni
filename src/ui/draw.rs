@@ -26,38 +26,29 @@ fn render_tile(tile: &Object, _time: f32) {
         tile.pos.x,
         tile.pos.y,
         tile.pos.screen_size,
-        0.12 * tile.pos.screen_size,
+        0.15 * tile.pos.screen_size,
         true,
         Color::from_hex(0x000000),
-        Color::from_hex(0x444444),
+        Color::from_hex(0x333333),
     );
 }
 
 fn render_non_tile_object(object: &Object, time: f32) {
-    for status in &object.statuses {
-        render_status(status, object, time);
-    }
     let screen_coord = object.get_screen_coord(time);
-    let alpha = 255 - 25;
-    // let color = match object.otype {
-    //     ObjectType::Jumper => Color::from_rgba(69, 6, 86, alpha),
-    //     ObjectType::Dasher => Color::from_rgba(107, 28, 8, alpha),
-    //     ObjectType::Wall => Color::from_rgba(5, 5, 5, alpha),
-    //     ObjectType::Tile => panic!("Invalid object type"),
-    // };
-    // let mut border_color = Color::from_vec(1.5 * color.to_vec());
     let color = match object.otype {
-        ObjectType::Jumper => Color::from_rgba(11 * 16, 35, 17, alpha),
-        ObjectType::Dasher => Color::from_rgba(97, 34, 162, alpha),
-        ObjectType::Wall => Color::from_rgba(19, 19, 19, alpha),
+        ObjectType::Jumper => Color::from_rgba(255, 94, 7, 255),
+        ObjectType::Dasher => Color::from_rgba(157, 24, 250, 255),
+        ObjectType::Wall => Color::from_rgba(19, 19, 19, 255),
         ObjectType::Tile => panic!("Invalid object type"),
     };
-    let mut border_color = Color::from_vec(0.4 * color.to_vec());
-    border_color.a = 0.92;  //alpha as f32 / 255.0;
+    let blend = 0.05;
+    let border_color = Color::from_vec(
+        blend * color.to_vec() + (1.0 - blend) * BLACK.to_vec(),
+    );
     draw_circle(
         screen_coord.x,
         screen_coord.y,
-        0.85 * screen_coord.screen_size,
+        0.80 * screen_coord.screen_size,
         border_color,
     );
     draw_circle(
@@ -69,7 +60,7 @@ fn render_non_tile_object(object: &Object, time: f32) {
 }
 
 fn render_background(_time: f32) {
-    clear_background(Color::new(0.2, 0.15, 0.22, 1.0));
+    clear_background(Color::new(0.12, 0.075, 0.11, 1.0));
 }
 
 fn render_status(status: &Status, object: &Object, time: f32) {

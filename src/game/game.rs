@@ -89,7 +89,6 @@ impl Game {
             }
         }
         for obj in kills {
-            let x = self.board.objects.len();
             self.board.remove_object(&obj);
         }
     }

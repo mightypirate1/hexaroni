@@ -1,4 +1,4 @@
-use crate::game::{moves, Game, Object, statuses::Status, moves::Move};
+use crate::engine::{moves, moves::Move, statuses::Status, Game, Object};
 use crate::geometry::HexCoord;
 
 #[derive(Debug, Clone)]
@@ -8,16 +8,15 @@ pub struct Drag {
     moves: Vec<moves::Move>,
 }
 
-
 impl Drag {
     pub fn create(object: &Object, game: &mut Game) -> Drag {
         let obj = game.get_obj_mut(object).unwrap();
         obj.statuses.push(Status::Dragged);
 
-        let moves = moves::legal_moves(&object, &game.board);
+        let moves = moves::legal_moves(object, &game.board);
         Drag {
             object: object.clone(),
-            targets: moves.iter().map(|m| m.target().clone()).collect(),
+            targets: moves.iter().map(|m| *m.target()).collect(),
             moves,
         }
     }

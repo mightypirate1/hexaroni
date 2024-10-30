@@ -1,5 +1,5 @@
 use macroquad::prelude::*;
-use crate::game::{Game, Object, ObjectType};
+use crate::game::Game;
 use crate::geometry::ScreenCoord;
 use super::{draw, control::ControlStatus};
 
@@ -14,40 +14,37 @@ pub fn render(game: &Game, time: f32, control_status: &ControlStatus, render_tar
         ..Default::default()
     });
 
-    let tiles: Vec<&Object> = game.board.objects.iter()
-        .filter(|&o| o.otype == ObjectType::Tile).collect();
-    let non_tiles: Vec<&Object> = game.board.objects.iter()
-        .filter(|&o| o.otype != ObjectType::Tile).collect();
-
+    // background
     draw::render_background(time);
-    for tile in tiles.iter().filter(|&t| t.animation.is_some()) {
+    
+    // animated tiles (first since they are presumed to fall or something...)
+    for tile in game.board.tiles.iter().filter(|&t| t.animation.is_some()) {
         draw::render_tile(tile, time);
     }
-    for tile in tiles.iter().filter(|&t| t.animation.is_none()) {
+    // non-animated tiles
+    for tile in game.board.tiles.iter().filter(|&t| t.animation.is_none()) {
         draw::render_tile(tile, time);
         if let Some(targeting) = &control_status.targeting {
-            draw::draw_bordered_hexagon(
-                &targeting.pos,
-                targeting.pos.screen_size,
-                &PINK, 
-                0.35,
-            );
+            draw::render_tile_status_color(targeting, &PINK, time);
+        }
+        if let Some(drag) = &control_status.dragging {
+            if drag.targets.contains(&tile.coord) {
+                draw::render_tile_status_color(&tile, &SKYBLUE, time);
+            }
         }
     }
-    for object in non_tiles.iter().filter(|&t| t.animation.is_none()) {
+    for object in game.board.objects.iter().filter(|&t| t.animation.is_none()) {
         draw::render_non_tile_object(object, time);
     }
-    for object in non_tiles.iter().filter(|&t| t.animation.is_some()) {
+    for object in game.board.objects.iter().filter(|&t| t.animation.is_some()) {
         draw::render_non_tile_object(object, time);
     }
-    
-    if let Some(dragged) = &control_status.dragging {
+    if let Some(drag) = &control_status.dragging {
         let screen_coord = ScreenCoord::mouse_pos(game.board.size);
-        draw::render_dragged(dragged, screen_coord, time);
+        draw::render_dragged_object(drag, screen_coord, time);
     }
 
     set_default_camera();
-    // clear_background(WHITE);
     draw_texture_ex(
         &render_target.texture,
         0.0,

@@ -1,7 +1,7 @@
 use std::time::Instant;
 use macroquad::prelude::*;
 use hexaroni::game::{Game, statuses::Status};
-use hexaroni::ui::{rendering, control::{ControlStatus, MouseAction, KbdAction}};
+use hexaroni::ui::{rendering, Drag, control::{ControlStatus, MouseAction, KbdAction}};
 use hexaroni::geometry::ScreenCoord;
 
 
@@ -41,9 +41,23 @@ async fn main() {
         
         // read mouse status
         control_status.mouse_pos = ScreenCoord::mouse_pos(game.board.size);
-        control_status.targeting = game.get_tile_at_pos(control_status.mouse_pos);
         control_status.hovering = game.get_object_at_pos(control_status.mouse_pos);
         control_status.action = update_mouse_action(&control_status);
+        control_status.targeting = match &control_status.hovering {
+            None => game.get_tile_at_pos(control_status.mouse_pos),
+            Some(object) => {
+                let targetable_player = if control_status.action == MouseAction::None {
+                    game.board.current_player
+                } else {
+                    game.board.current_player.opponent()
+                };
+                if object.owned_by(&targetable_player) {
+                    game.get_tile_at_pos(control_status.mouse_pos)
+                } else {
+                    None
+                }
+            },
+        };
         
         // handle events
         match &control_status.action {
@@ -51,20 +65,24 @@ async fn main() {
                 if control_status.dragging.is_none() {
                     // if we are not dragging already, we set the hovered object to dragging
                     if let Some(ref hovered) = control_status.hovering {
-                        if hovered.props.draggable {
-                            control_status.dragging = Some(hovered.clone());
-                            let obj = game.get_obj_mut(hovered).unwrap();
-                            obj.statuses.push(Status::Dragged);
+                        if hovered.props.draggable && hovered.owned_by(&game.board.current_player) && !hovered.props.dead {
+                            control_status.dragging = Some(Drag::create(&hovered, &mut game));
                         }
                     }
                 }
             },
             MouseAction::Drop => {
-                if let Some(object) = &mut control_status.dragging {
-                    let obj = game.get_obj_mut(object).unwrap();
-                    obj.statuses.retain(|&x| x != Status::Dragged);
-                    if let Some(target) = &control_status.targeting {
-                        game.move_to(object, target.coord, curr_time, 0.25);
+                if let Some(drag) = &mut control_status.dragging {
+                    let obj = game.get_obj_mut(&drag.object).unwrap();
+                    obj.remove_status(Status::Dragged);
+                    if let Some(target_tile) = &control_status.targeting {
+                        if let Some(r#move) = drag.get_move_to(&target_tile.coord) {
+                            game.apply_move(
+                                r#move,
+                                curr_time,
+                                0.25,
+                            );
+                        }
                     }
                 }
                 control_status.dragging = None;
@@ -104,7 +122,8 @@ fn update_mouse_action(status: &ControlStatus) -> MouseAction {
             },
             _ => {},
         };
-    } else if is_mouse_button_pressed(MouseButton::Left) && status.hovering.is_some() {
+    } else if is_mouse_button_pressed(MouseButton::Left)
+        && status.hovering.is_some() {
         return MouseAction::Dragging;
     } else if is_mouse_button_down(MouseButton::Left) {
         return status.action.clone();

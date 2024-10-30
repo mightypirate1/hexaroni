@@ -4,6 +4,11 @@ use crate::geometry::ScreenCoord;
 #[derive(Copy, Clone, Debug)]
 pub enum  Animation {
     Idle {pos: ScreenCoord},
+    Kill {
+        pos: ScreenCoord,
+        start_time: f32,
+        duration: f32,
+    },
     Wobble {
         pos: ScreenCoord,
         amplitude: f32,
@@ -33,6 +38,19 @@ impl Animation {
                     from.add(&delta.scale(f32::powi(progress, 2)))
                 }
             },
+            Animation::Kill { pos, start_time, duration } => {
+                let progress = (time - start_time) / duration;
+                let heaven = ScreenCoord {
+                    x: 0.0,
+                    y: -pos.screen_size * 2.0 * progress,
+                    screen_size: pos.screen_size,
+                };
+                if progress >= 1.0 {
+                    heaven
+                } else {
+                    pos.add(&heaven).scale(1.0 - progress)
+                }
+            },
             Animation::Wobble { pos, amplitude, start_time , speed} => {
                 let progress = (time - start_time) / 0.5;
                 let wobble = ScreenCoord {
@@ -47,7 +65,11 @@ impl Animation {
 
     pub fn is_expired(&self, time: f32) -> bool {
         match self {
-            Animation::Move{
+            Animation::Move {
+                start_time,
+                duration,
+                ..
+            } | Animation::Kill {
                 start_time,
                 duration,
                 ..

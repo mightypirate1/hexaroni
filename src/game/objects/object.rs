@@ -1,5 +1,6 @@
 use crate::game::{
     ObjectType,
+    Player,
     objects::ObjectProps,
     statuses::Status,
 };
@@ -12,9 +13,9 @@ pub struct Object {
     pub otype: ObjectType,
     pub coord: HexCoord,
     pub props: ObjectProps,
-    pub pos: ScreenCoord,
     pub statuses: Vec<Status>,
     pub animation: Option<Animation>,
+    pub player: Player,
 }
 
 
@@ -26,14 +27,14 @@ impl PartialEq for Object {
 
 
 impl Object {
-    pub fn new(oid: usize, otype: ObjectType, coord: HexCoord) -> Object {
+    pub fn new(oid: usize, otype: ObjectType, coord: HexCoord, player: Player) -> Object {
         Object {
             otype,
             coord,
             props: ObjectProps{oid, ..Default::default()},
-            pos: ScreenCoord::from_hexcoord(&coord),
             animation: None,
             statuses: vec![],
+            player,
         }
     }
 
@@ -47,34 +48,29 @@ impl Object {
                 draggable: false,
                 ..Default::default()
             },
-            pos: ScreenCoord::from_hexcoord(&coord),
             animation: None,
             statuses: vec![],
+            player: Player::God,
         }
     }
 
-    pub fn get_screen_coord(&self, time: f32) -> ScreenCoord {
+    pub fn owned_by(&self, player: &Player) -> bool {
+        player == &self.player
+    }
+
+    pub fn get_display_pos(&self, time: f32) -> ScreenCoord {
         match &self.animation {
             Some(animation) => animation.get_pos(time),
-            None => self.pos,
+            None => ScreenCoord::from_hexcoord(&self.coord),
         }
     }
 
-    pub fn move_to(&mut self, coord: HexCoord) {
-        self.set_coord(coord);
-        self.set_pos_to_coord();
+    pub fn get_screen_coord(&self) -> ScreenCoord {
+        ScreenCoord::from_hexcoord(&self.coord)
     }
 
-    pub fn set_pos(&mut self, pos: ScreenCoord) {
-        self.pos = pos;
-    }
-
-    pub fn set_coord(&mut self, coord: HexCoord) {
-        self.coord = coord;
-    }
-
-    pub fn set_pos_to_coord(&mut self) {
-        self.pos = ScreenCoord::from_hexcoord(&self.coord);
+    pub fn set_coord(&mut self, coord: &HexCoord) {
+        self.coord = coord.clone();
     }
 
     pub fn add_status(&mut self, status: Status) {
@@ -82,6 +78,6 @@ impl Object {
     }
 
     pub fn remove_status(&mut self, status: Status) {
-        self.statuses.retain(|s| *s != status);
+        self.statuses.retain(|&s| s != status);
     }
 }

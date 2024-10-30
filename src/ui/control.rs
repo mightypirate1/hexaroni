@@ -1,7 +1,6 @@
+use crate::engine::Object;
 use crate::geometry::ScreenCoord;
-use crate::game::Object;
 use crate::ui::Drag;
-
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum MouseAction {
@@ -12,6 +11,7 @@ pub enum MouseAction {
 
 pub enum KbdAction {
     Quit,
+    ReloadShader,
 }
 
 #[derive(Debug, Clone)]

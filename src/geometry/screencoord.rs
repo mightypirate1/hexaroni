@@ -1,6 +1,5 @@
-use macroquad::prelude::*;
 use super::HexCoord;
-
+use macroquad::prelude::*;
 
 #[derive(Copy, Clone, Debug)]
 pub struct ScreenCoord {
@@ -9,9 +8,8 @@ pub struct ScreenCoord {
     pub screen_size: f32,
 }
 
-
 impl ScreenCoord {
-    pub fn new(x: f32, y:f32, board_size: usize) -> ScreenCoord {
+    pub fn new(x: f32, y: f32, board_size: usize) -> ScreenCoord {
         ScreenCoord {
             x,
             y,
@@ -21,13 +19,12 @@ impl ScreenCoord {
 
     pub fn from_hexcoord(coord: &HexCoord) -> ScreenCoord {
         let screen_size = ScreenCoord::screen_size(coord.board_size);
-        let offset_x = screen_size * (1 + coord.y) as f32;
+        let offset_x = screen_size * (1.2 + coord.y as f32);
         let offset_y = 2.0 * screen_size;
         let x = offset_x + (2.15 * screen_size * coord.x as f32);
         let y = offset_y + (1.85 * screen_size * coord.y as f32);
-        ScreenCoord {x, y, screen_size}
+        ScreenCoord { x, y, screen_size }
     }
-
 
     pub fn mouse_pos(board_size: usize) -> ScreenCoord {
         let (x, y) = mouse_position();

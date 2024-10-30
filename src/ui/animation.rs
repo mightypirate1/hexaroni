@@ -1,9 +1,10 @@
 use crate::geometry::ScreenCoord;
 
-
 #[derive(Copy, Clone, Debug)]
-pub enum  Animation {
-    Idle {pos: ScreenCoord},
+pub enum Animation {
+    Idle {
+        pos: ScreenCoord,
+    },
     Kill {
         pos: ScreenCoord,
         start_time: f32,
@@ -26,19 +27,28 @@ pub enum  Animation {
 impl Animation {
     pub fn get_pos(&self, time: f32) -> ScreenCoord {
         match self {
-            Animation::Idle { pos} => pos.clone(),
-            Animation::Move { from, to, start_time, duration } => {
+            Animation::Idle { pos } => *pos,
+            Animation::Move {
+                from,
+                to,
+                start_time,
+                duration,
+            } => {
                 let progress = (time - start_time) / duration;
                 if progress >= 1.0 {
-                    to.clone()
+                    *to
                 } else if progress <= 0.0 {
-                    from.clone()
+                    *from
                 } else {
-                    let delta = to.sub(&from);
+                    let delta = to.sub(from);
                     from.add(&delta.scale(f32::powi(progress, 2)))
                 }
-            },
-            Animation::Kill { pos, start_time, duration } => {
+            }
+            Animation::Kill {
+                pos,
+                start_time,
+                duration,
+            } => {
                 let progress = (time - start_time) / duration;
                 let heaven = ScreenCoord {
                     x: 0.0,
@@ -50,8 +60,13 @@ impl Animation {
                 } else {
                     pos.add(&heaven).scale(1.0 - progress)
                 }
-            },
-            Animation::Wobble { pos, amplitude, start_time , speed} => {
+            }
+            Animation::Wobble {
+                pos,
+                amplitude,
+                start_time,
+                speed,
+            } => {
                 let progress = (time - start_time) / 0.5;
                 let wobble = ScreenCoord {
                     x: amplitude * (speed * progress * 2.0 * std::f32::consts::PI).sin(),
@@ -59,7 +74,7 @@ impl Animation {
                     screen_size: pos.screen_size,
                 };
                 pos.add(&wobble)
-            },
+            }
         }
     }
 
@@ -69,7 +84,8 @@ impl Animation {
                 start_time,
                 duration,
                 ..
-            } | Animation::Kill {
+            }
+            | Animation::Kill {
                 start_time,
                 duration,
                 ..

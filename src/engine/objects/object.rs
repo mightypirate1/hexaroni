@@ -1,12 +1,6 @@
-use crate::game::{
-    ObjectType,
-    Player,
-    objects::ObjectProps,
-    statuses::Status,
-};
+use crate::engine::{objects::ObjectProps, statuses::Status, ObjectType, Player};
 use crate::geometry::{HexCoord, ScreenCoord};
 use crate::ui::Animation;
-
 
 #[derive(Clone, Debug)]
 pub struct Object {
@@ -18,20 +12,21 @@ pub struct Object {
     pub player: Player,
 }
 
-
 impl PartialEq for Object {
     fn eq(&self, other: &Self) -> bool {
         self.props.oid == other.props.oid
     }
 }
 
-
 impl Object {
     pub fn new(oid: usize, otype: ObjectType, coord: HexCoord, player: Player) -> Object {
         Object {
             otype,
             coord,
-            props: ObjectProps{oid, ..Default::default()},
+            props: ObjectProps {
+                oid,
+                ..Default::default()
+            },
             animation: None,
             statuses: vec![],
             player,
@@ -42,7 +37,7 @@ impl Object {
         Object {
             otype: ObjectType::Tile,
             coord,
-            props: ObjectProps{
+            props: ObjectProps {
                 oid,
                 selectable: false,
                 draggable: false,
@@ -70,7 +65,7 @@ impl Object {
     }
 
     pub fn set_coord(&mut self, coord: &HexCoord) {
-        self.coord = coord.clone();
+        self.coord = *coord;
     }
 
     pub fn add_status(&mut self, status: Status) {

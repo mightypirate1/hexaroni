@@ -1,7 +1,9 @@
-use macroquad::prelude::*;
-use crate::{game::{statuses::Status, Object, ObjectType, Player}, geometry::ScreenCoord};
 use super::Drag;
-
+use crate::{
+    engine::{statuses::Status, Object, ObjectType, Player},
+    geometry::ScreenCoord,
+};
+use macroquad::prelude::*;
 
 pub fn render_dragged_object(drag: &Drag, pos: ScreenCoord, _time: f32) {
     let color = match drag.object.otype {
@@ -14,36 +16,30 @@ pub fn render_dragged_object(drag: &Drag, pos: ScreenCoord, _time: f32) {
     draw_bordered_circle(pos, &color, &border_color, 0.5);
 }
 
-
 pub fn render_tile(tile: &Object, time: f32) {
     let pos = tile.get_display_pos(time);
-    draw_bordered_hexagon(
-        &pos,
-        pos.screen_size,
-        &Color::from_hex(0x333333),
-        1.0,
-    );
+    draw_bordered_hexagon(&pos, pos.screen_size, &Color::from_hex(0x333333), 0.7);
 }
-
 
 pub fn render_non_tile_object(object: &Object, time: f32) {
     let color = object_color(&object.otype);
     let border_color = border_color(&color, object);
-    let alpha = if object.statuses.contains(&Status::Dragged) { 0.5 } else { 1.0 };
+    let alpha = if object.statuses.contains(&Status::Dragged) {
+        0.5
+    } else {
+        1.0
+    };
     draw_bordered_circle(object.get_display_pos(time), &color, &border_color, alpha);
 }
-
 
 pub fn render_background(_time: f32) {
     clear_background(Color::new(0.12, 0.075, 0.11, 1.0));
 }
 
-
 pub fn render_tile_status_color(tile: &Object, color: &Color, time: f32) {
     let pos = tile.get_display_pos(time);
     draw_bordered_hexagon(&pos, pos.screen_size, color, 0.35);
 }
-
 
 fn draw_bordered_hexagon(pos: &ScreenCoord, size: f32, color: &Color, alpha: f32) {
     draw_hexagon(
@@ -57,7 +53,6 @@ fn draw_bordered_hexagon(pos: &ScreenCoord, size: f32, color: &Color, alpha: f32
     );
 }
 
-
 fn object_color(otype: &ObjectType) -> Color {
     match otype {
         ObjectType::Jumper => Color::from_rgba(255, 94, 7, 255),
@@ -66,7 +61,6 @@ fn object_color(otype: &ObjectType) -> Color {
         ObjectType::Tile => panic!("Invalid object type"),
     }
 }
-
 
 fn draw_bordered_circle(pos: ScreenCoord, color: &Color, border_color: &Color, alpha: f32) {
     draw_circle(
@@ -83,7 +77,6 @@ fn draw_bordered_circle(pos: ScreenCoord, color: &Color, border_color: &Color, a
     );
 }
 
-
 fn border_color(color: &Color, object: &Object) -> Color {
     let blend = 0.5;
     let mixin_color = match &object.player {
@@ -91,14 +84,12 @@ fn border_color(color: &Color, object: &Object) -> Color {
         Player::B => WHITE,
         _ => BLACK,
     };
-    mix_color(&color, &mixin_color, blend)
+    mix_color(color, &mixin_color, blend)
 }
-
 
 fn mix_color(x: &Color, y: &Color, alpha: f32) -> Color {
     Color::from_vec(alpha * x.to_vec() + (1.0 - alpha) * y.to_vec())
 }
-
 
 fn with_alpha(color: &Color, alpha: f32) -> Color {
     Color::from_vec(color.to_vec().with_w(alpha))

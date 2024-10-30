@@ -1,5 +1,5 @@
+use super::{Board, Object, ObjectType};
 use crate::geometry::HexCoord;
-use super::{Object, ObjectType, Board, Player};
 
 #[derive(Debug, Clone)]
 pub struct Move {
@@ -10,7 +10,7 @@ pub struct Move {
 
 #[derive(Debug, Clone)]
 pub enum Effect {
-    Kill {object: Object},
+    Kill { object: Object },
 }
 
 impl Move {
@@ -18,7 +18,11 @@ impl Move {
         if path.len() < 2 {
             panic!("Path must have at least two coordinates");
         }
-        Move {object, path, effects}
+        Move {
+            object,
+            path,
+            effects,
+        }
     }
 
     pub fn target(&self) -> &HexCoord {
@@ -36,13 +40,15 @@ pub fn legal_moves(object: &Object, board: &Board) -> Vec<Move> {
 }
 
 fn wall_moves(object: &Object, board: &Board) -> Vec<Move> {
-    let walks: Vec<Move> = object.coord
+    let walks: Vec<Move> = object
+        .coord
         .get_all_neighbours(1)
         .iter()
         .filter(|c| board.is_empty(c))
         .map(|&c| Move::new(object.clone(), vec![object.coord, c], vec![]))
         .collect();
-    let kills: Vec<Move> = object.coord
+    let kills: Vec<Move> = object
+        .coord
         .get_all_neighbours(1)
         .iter()
         .filter(|c| {
@@ -52,47 +58,47 @@ fn wall_moves(object: &Object, board: &Board) -> Vec<Move> {
                 None => false,
             }
         })
-        .map(|&c| Move::new(
-            object.clone(), 
-            vec![object.coord, c],
-            vec![Effect::Kill{object: board.contents(&c).unwrap().clone()}])
-        )
+        .map(|&c| {
+            Move::new(
+                object.clone(),
+                vec![object.coord, c],
+                vec![Effect::Kill {
+                    object: board.contents(&c).unwrap().clone(),
+                }],
+            )
+        })
         .collect();
-    walks.into_iter().chain(kills.into_iter()).collect()
+    walks.into_iter().chain(kills).collect()
 }
-
 
 fn jumper_moves(object: &Object, board: &Board) -> Vec<Move> {
     fn create_move(obj: &Object, target: HexCoord, inter: &HexCoord, board: &Board) -> Move {
         let effects = match board.contents(&target) {
             Some(t) => {
                 if t.owned_by(&obj.player.opponent()) {
-                    vec![Effect::Kill{object: t.clone()}]
+                    vec![Effect::Kill { object: t.clone() }]
                 } else {
                     vec![]
                 }
-            },
+            }
             None => vec![],
         };
-        Move::new(
-            obj.clone(), 
-            vec![obj.coord, inter.clone(), target],
-            effects,
-    )
+        Move::new(obj.clone(), vec![obj.coord, *inter, target], effects)
     }
     fn get_hook(obj: &Object, dir: usize, clockw: bool, board: &Board) -> Option<Move> {
         let intermediate = obj.coord.get_neighbor(dir, 2);
         match intermediate {
             Some(inter) => {
-                let hook_dir = (dir + if clockw {1} else {5}) % 6;
+                let hook_dir = (dir + if clockw { 1 } else { 5 }) % 6;
                 if let Some(target) = inter.get_neighbor(hook_dir, 1) {
-                    if board.is_empty(&target) 
-                    || board.owner(&target) == Some(obj.player.opponent()) {
+                    if board.is_empty(&target)
+                        || board.owner(&target) == Some(obj.player.opponent())
+                    {
                         return Some(create_move(obj, target, &inter, board));
                     }
                 }
                 None
-            },
+            }
             None => None,
         }
     }
@@ -102,15 +108,14 @@ fn jumper_moves(object: &Object, board: &Board) -> Vec<Move> {
             get_hook(obj, dir, true, board),
         ]
     }
-    object.coord.get_all_directions()
+    object
+        .coord
+        .get_all_directions()
         .iter()
-        .map(|&dir| get_hooks(object, dir, board))
-        .into_iter()
-        .flatten()
+        .flat_map(|&dir| get_hooks(object, dir, board))
         .flatten()
         .collect()
 }
-
 
 fn dasher_moves(object: &Object, board: &Board) -> Vec<Move> {
     fn create_move(path: Vec<HexCoord>, obj: &Object, effects: Vec<Effect>) -> Move {
@@ -120,28 +125,31 @@ fn dasher_moves(object: &Object, board: &Board) -> Vec<Move> {
         let mut path = vec![];
         let mut curr = Some(obj.coord);
         let mut effects = vec![];
-        while let Some(c) = curr{
+        while let Some(c) = curr {
             path.push(c);
             let next = c.get_neighbor(*dir, 1);
             match next {
                 Some(n) => {
                     if let Some(next_tile_owner) = board.owner(&n) {
-                        if next_tile_owner != obj.player.opponent()
-                        && !obj.props.dead {
+                        if next_tile_owner != obj.player.opponent() && !obj.props.dead {
                             break;
                         }
                     }
                     if let Some(target) = board.contents(&n) {
-                        effects.push(Effect::Kill{object: target.clone()});
+                        effects.push(Effect::Kill {
+                            object: target.clone(),
+                        });
                     }
-                },
+                }
                 None => break,
             }
             curr = next;
         }
         (path, effects)
     }
-    object.coord.get_all_directions()
+    object
+        .coord
+        .get_all_directions()
         .iter()
         .map(|dir| create_path(object, dir, board))
         .filter(|(p, _)| p.len() > 1)

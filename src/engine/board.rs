@@ -3,7 +3,6 @@ use std::collections::HashSet;
 use super::{Object, ObjectType, Player};
 use crate::geometry::HexCoord;
 
-
 pub struct Board {
     pub size: usize,
     pub tiles: Vec<Object>,
@@ -14,23 +13,18 @@ pub struct Board {
 impl Board {
     pub fn test_square(size: usize) -> Board {
         let tiles: Vec<Object> = (0..size)
-            .map(move |x| {
-                (0..size)
-                .map(move |y| {
-                        let coord = HexCoord::create(x, y, size);
-                        Object::new_tile(y * size + x, coord)
-                    }
-                )
+            .flat_map(move |x| {
+                (0..size).map(move |y| {
+                    let coord = HexCoord::create(x, y, size);
+                    Object::new_tile(y * size + x, coord)
+                })
             })
-            .flatten()
             .collect();
-        
+
         let mut oid = tiles.len();
         let pieces: Vec<Object> = tiles
             .iter()
-            .filter(|t| {
-                (23 - t.coord.x + 2 * t.coord.y) % 7 < 3
-            })
+            .filter(|t| (23 - t.coord.x + 2 * t.coord.y) % 7 < 3)
             .enumerate()
             .map(|(i, t)| {
                 oid += 1;
@@ -64,10 +58,11 @@ impl Board {
     }
 
     pub fn is_empty(&self, coord: &HexCoord) -> bool {
-        self.tile_coords().contains(coord) &&
-        self.objects
-            .iter()
-            .all(|o| &o.coord != coord || o.props.dead)
+        self.tile_coords().contains(coord)
+            && self
+                .objects
+                .iter()
+                .all(|o| &o.coord != coord || o.props.dead)
     }
 
     pub fn contents(&self, coord: &HexCoord) -> Option<&Object> {
@@ -88,12 +83,12 @@ impl Board {
         self.tiles.iter().map(|t| t.coord).collect()
     }
 
-    fn verify(tiles: &Vec<Object>, objects: &Vec<Object>) {
+    fn verify(tiles: &[Object], objects: &[Object]) {
         let tile_coords: Vec<HexCoord> = tiles.iter().map(|t| t.coord).collect();
         let mut tcoords = HashSet::new();
         let mut ocoords = HashSet::new();
         let mut oids = HashSet::new();
-        
+
         tiles.iter().for_each(|t| {
             if !tcoords.insert(t.coord) {
                 panic!("Duplicate tile coord");

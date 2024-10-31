@@ -4,8 +4,8 @@ pub struct ObjectProps {
     pub selectable: bool,
     pub draggable: bool,
     pub dead: bool,
+    pub size: f32,
 }
-
 
 impl Default for ObjectProps {
     fn default() -> ObjectProps {
@@ -14,18 +14,25 @@ impl Default for ObjectProps {
             selectable: true,
             draggable: true,
             dead: false,
+            size: 1.0,
         }
     }
 }
 
-
 impl ObjectProps {
-    pub fn new(oid: usize, selectable: bool, draggable: bool, dead: bool) -> ObjectProps {
+    pub fn new(
+        oid: usize,
+        selectable: bool,
+        draggable: bool,
+        dead: bool,
+        size: f32,
+    ) -> ObjectProps {
         ObjectProps {
             oid,
             selectable,
             draggable,
             dead,
+            size,
         }
     }
 }

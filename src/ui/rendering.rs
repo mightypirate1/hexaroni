@@ -1,109 +1,182 @@
-use super::{control::ControlStatus, draw};
-use crate::engine::{Game, Player};
+use super::control::ControlStatus;
+use crate::engine::{Game, Object, ObjectType, Player};
 use crate::geometry::ScreenCoord;
+use crate::ui::meshes;
+use itertools::Itertools;
 use macroquad::prelude::*;
 use macroquad::Error;
 use miniquad::window::screen_size;
+use miniquad::{CullFace, PipelineParams};
 use std::{env, fs};
 
 pub struct Renderer {
-    pub fg_target: RenderTarget,
-    pub bg_target: RenderTarget,
-    pub fg_camera: Camera2D,
-    pub bg_camera: Camera2D,
-    pub material: Material,
+    render_scale: f32,
+    render_target: RenderTarget,
+    bg_camera: Camera2D,
+    bg_material: Material,
+    fg_material: Material,
 }
 
 impl Renderer {
     pub fn new(render_scale: f32) -> Result<Renderer, Error> {
-        let fg_target = Renderer::create_target(render_scale);
-        let bg_target = Renderer::create_target(render_scale);
-        let path_to_crate = env!("CARGO_MANIFEST_DIR");
+        let render_target = Renderer::create_target(render_scale);
         Ok(Renderer {
-            fg_target: fg_target.clone(),
-            bg_target: bg_target.clone(),
-            fg_camera: Renderer::create_camera(&fg_target),
-            bg_camera: Renderer::create_camera(&bg_target),
-            material: load_material(
-                ShaderSource::Glsl {
-                    vertex: &fs::read_to_string(format!(
-                        "{}/src/ui/shaders/vertex.glsl",
-                        path_to_crate
-                    ))
-                    .expect("unable to load vertex shader"),
-                    fragment: &fs::read_to_string(format!(
-                        "{}/src/ui/shaders/frag.glsl",
-                        path_to_crate
-                    ))
-                    .expect("unable to load fragment shader"),
-                },
+            render_scale,
+            render_target: render_target.clone(),
+            bg_camera: Renderer::create_internal_camera(&render_target),
+            bg_material: Renderer::fetch_material(
+                "bg",
                 MaterialParams {
-                    uniforms: vec![UniformDesc::new("canvasSize", UniformType::Float2)],
+                    uniforms: vec![
+                        UniformDesc::new("canvas_size", UniformType::Float2),
+                        UniformDesc::new("render_scale", UniformType::Float1),
+                    ],
+                    ..Default::default()
+                },
+            )?,
+            fg_material: Renderer::fetch_material(
+                "fg",
+                MaterialParams {
+                    pipeline_params: PipelineParams {
+                        cull_face: CullFace::Front,
+                        ..Default::default()
+                    },
+                    uniforms: vec![
+                        UniformDesc::new("canvas_size", UniformType::Float2),
+                        UniformDesc::new("render_scale", UniformType::Float1),
+                    ],
                     ..Default::default()
                 },
             )?,
         })
     }
 
-    pub fn render(&self, game: &Game, control_status: &ControlStatus, time: f32) {
-        // initialize bg rendering
-        gl_use_material(&self.material);
-        self.material
-            .set_uniform("canvasSize", (screen_width(), screen_height()));
-        set_camera(&self.bg_camera);
-        // render bg
-        Renderer::draw_texture_from_target(&self.bg_target);
-
-        // initialize and render fg
-        gl_use_default_material();
-        set_camera(&self.fg_camera);
-        self.render_fg(game, control_status, time);
-
-        if let Some(winner) = game.winner() {
-            self.render_win(&winner, time);
+    pub fn create_camera(
+        &self,
+        camera_position: Vec3,
+        camera_target: Vec3,
+        camera_up: Vec3,
+    ) -> Camera3D {
+        Camera3D {
+            position: camera_position,
+            target: camera_target,
+            up: camera_up,
+            render_target: Some(self.render_target.clone()),
+            projection: Projection::Perspective,
+            ..Default::default()
         }
+    }
+
+    pub fn render(
+        &mut self,
+        game: &Game,
+        camera: &Camera3D,
+        control_status: &ControlStatus,
+        time: f32,
+    ) {
+        // initialize and render bg to bg_target
+        gl_use_material(&self.bg_material);
+        self.bg_material.set_uniform("canvas_size", screen_size());
+        self.bg_material
+            .set_uniform("render_scale", self.render_scale);
+        set_camera(&self.bg_camera); // bg_camera renders to the fg_target
+        Renderer::draw_texture_from_target(&self.render_target);
+
+        set_camera(camera);
+        gl_use_material(&self.fg_material);
+        Renderer::render_game(game, control_status, time);
+        set_default_camera();
+        gl_use_default_material();
+        Renderer::draw_texture_from_target(&self.render_target);
+
+        if let Some(player) = game.winner() {
+            Renderer::render_win(self, &player, time)
+        }
+    }
+
+    fn render_game(game: &Game, control_status: &ControlStatus, time: f32) {
+        let screen_size = ScreenCoord::screen_size(game.board.size);
+        game.board
+            .tiles
+            .iter()
+            .sorted_by(|a, b| a.coord.y.cmp(&b.coord.y))
+            .for_each(|t| {
+                Renderer::render_tile(t, control_status, screen_size);
+            });
+        game.board
+            .objects
+            .iter()
+            .sorted_by(|a, b| a.coord.y.cmp(&b.coord.y))
+            .for_each(|o| {
+                let as_active = game.board.current_player == o.player;
+                Renderer::render_object(o, as_active, screen_size, time);
+            });
+    }
+
+    fn render_tile(t: &Object, control_status: &ControlStatus, screen_size: f32) {
+        let mut color = vec4(0.1, 0.1, 0.1, 1.0);
+        if let Some(hov) = &control_status.hovering {
+            if hov == t {
+                color += PINK.to_vec();
+            }
+        }
+        if let Some(tgt) = &control_status.targeting {
+            if tgt == t {
+                color += RED.to_vec();
+            }
+        }
+        if let Some(drag) = &control_status.dragging {
+            if drag.has_move_to(&t.coord) {
+                color += SKYBLUE.to_vec();
+            }
+        }
+        let mesh = meshes::tile_hex_mesh(t, &color, screen_size);
+        draw_mesh(&mesh);
+    }
+
+    fn render_object(o: &Object, as_active: bool, screen_size: f32, time: f32) {
+        let player_color = match o.player {
+            Player::A => PINK.to_vec(),
+            Player::B => SKYBLUE.to_vec(),
+            Player::God => BLACK.to_vec(),
+        };
+        let mesh = match o.otype {
+            ObjectType::Wall => {
+                let object_color = BLACK.to_vec();
+                meshes::obj_wall_mesh(o, &object_color, &player_color, screen_size, time)
+            }
+            ObjectType::Dasher => {
+                let object_color = BLACK.to_vec();
+                meshes::obj_jumper_mesh(
+                    o,
+                    &object_color,
+                    &player_color,
+                    as_active,
+                    screen_size,
+                    time,
+                )
+            }
+            ObjectType::Jumper => {
+                let object_color = BLACK.to_vec();
+                meshes::obj_dasher_mesh(
+                    o,
+                    &object_color,
+                    &player_color,
+                    as_active,
+                    screen_size,
+                    time,
+                )
+            }
+            _ => panic!("bad thing happen"),
+        };
+        draw_mesh(&mesh);
     }
 
     fn render_win(&self, winner: &Player, _time: f32) {
         let text = format!("{:?} rocks!", &winner);
         let (w, h) = screen_size();
-        let text_width = 1.5 * h;
-        draw_text(&text, 0.5 * (w - text_width), 0.5 * h, 0.5 * h, ORANGE);
-    }
-
-    fn render_fg(&self, game: &Game, control_status: &ControlStatus, time: f32) {
-        // background
-        Renderer::draw_texture_from_target(&self.bg_target);
-
-        // animated tiles (first since they are presumed to fall or something...)
-        for tile in game.board.tiles.iter().filter(|&t| t.animation.is_some()) {
-            draw::render_tile(tile, time);
-        }
-        // non-animated tiles
-        for tile in game.board.tiles.iter().filter(|&t| t.animation.is_none()) {
-            draw::render_tile(tile, time);
-            if let Some(targeting) = &control_status.targeting {
-                draw::render_tile_status_color(targeting, &PINK, time);
-            }
-            if let Some(drag) = &control_status.dragging {
-                if drag.targets.contains(&tile.coord) {
-                    draw::render_tile_status_color(tile, &SKYBLUE, time);
-                }
-            }
-        }
-        for object in game.board.objects.iter().filter(|&t| t.animation.is_none()) {
-            draw::render_non_tile_object(object, time);
-        }
-        for object in game.board.objects.iter().filter(|&t| t.animation.is_some()) {
-            draw::render_non_tile_object(object, time);
-        }
-        if let Some(drag) = &control_status.dragging {
-            let screen_coord = ScreenCoord::mouse_pos(game.board.size);
-            draw::render_dragged_object(drag, screen_coord, time);
-        }
-
-        set_default_camera();
-        Renderer::draw_texture_from_target(&self.fg_target);
+        let text_width = 1.2 * h;
+        draw_text(&text, 0.25 * (w - text_width), 0.5 * h, 0.5 * h, ORANGE);
     }
 
     fn draw_texture_from_target(target: &RenderTarget) {
@@ -128,12 +201,33 @@ impl Renderer {
         render_target
     }
 
-    fn create_camera(render_target: &RenderTarget) -> Camera2D {
+    fn create_internal_camera(render_target: &RenderTarget) -> Camera2D {
         Camera2D {
             zoom: vec2(2.0 / screen_width(), 2.0 / screen_height()),
             target: vec2(0.5 * screen_width(), 0.5 * screen_height()),
             render_target: Some(render_target.clone()),
             ..Default::default()
         }
+    }
+
+    fn fetch_material(name: &str, material_params: MaterialParams) -> Result<Material, Error> {
+        let path_to_crate = env!("CARGO_MANIFEST_DIR");
+        let vertex_shader_code = fs::read_to_string(format!(
+            "{}/src/ui/shaders/{}/vertex.glsl",
+            path_to_crate, name
+        ))
+        .expect("unable to load vertex shader");
+        let frag_shader_code = fs::read_to_string(format!(
+            "{}/src/ui/shaders/{}/frag.glsl",
+            path_to_crate, name
+        ))
+        .expect("unable to load fragment shader");
+        load_material(
+            ShaderSource::Glsl {
+                vertex: &vertex_shader_code,
+                fragment: &frag_shader_code,
+            },
+            material_params,
+        )
     }
 }

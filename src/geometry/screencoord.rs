@@ -5,16 +5,12 @@ use macroquad::prelude::*;
 pub struct ScreenCoord {
     pub x: f32,
     pub y: f32,
-    pub screen_size: f32,
+    pub z: f32,
 }
 
 impl ScreenCoord {
-    pub fn new(x: f32, y: f32, board_size: usize) -> ScreenCoord {
-        ScreenCoord {
-            x,
-            y,
-            screen_size: ScreenCoord::screen_size(board_size),
-        }
+    pub fn new(x: f32, y: f32) -> ScreenCoord {
+        ScreenCoord { x, y, z: 0.0 }
     }
 
     pub fn from_hexcoord(coord: &HexCoord) -> ScreenCoord {
@@ -23,33 +19,48 @@ impl ScreenCoord {
         let offset_y = 1.3 * screen_size;
         let x = offset_x + (2.15 * screen_size * coord.x as f32);
         let y = offset_y + (1.85 * screen_size * coord.y as f32);
-        ScreenCoord { x, y, screen_size }
+
+        let x = x - 0.5 * screen_width();
+        let y = y - 0.5 * screen_height();
+
+        ScreenCoord { x, y, z: 0.0 }
     }
 
-    pub fn mouse_pos(board_size: usize) -> ScreenCoord {
-        let (x, y) = mouse_position();
-        ScreenCoord::new(x, y, board_size)
+    pub fn dist_from(&self, other: &ScreenCoord) -> f32 {
+        (self.as_vec() - other.as_vec()).length()
     }
 
-    pub fn is_close(&self, other: ScreenCoord) -> bool {
-        let delta = self.sub(&other);
-        let distance_sq = delta.x.powi(2) + delta.y.powi(2);
-        distance_sq < 0.75 * self.screen_size.powi(2)
+    pub fn as_vec(&self) -> Vec3 {
+        vec3(self.x, self.y, self.y)
+    }
+
+    pub fn with_x(&self, x: f32) -> ScreenCoord {
+        ScreenCoord {
+            x,
+            y: self.y,
+            z: self.z,
+        }
+    }
+    pub fn with_y(&self, y: f32) -> ScreenCoord {
+        ScreenCoord {
+            x: self.x,
+            y,
+            z: self.z,
+        }
+    }
+    pub fn with_z(&self, z: f32) -> ScreenCoord {
+        ScreenCoord {
+            x: self.x,
+            y: self.y,
+            z,
+        }
     }
 
     pub fn add(&self, other: &ScreenCoord) -> ScreenCoord {
         ScreenCoord {
             x: self.x + other.x,
             y: self.y + other.y,
-            screen_size: self.screen_size,
-        }
-    }
-
-    pub fn add_v(&self, vec: Vec2) -> ScreenCoord {
-        ScreenCoord {
-            x: self.x + vec.x,
-            y: self.y + vec.y,
-            screen_size: self.screen_size,
+            z: self.z + other.z,
         }
     }
 
@@ -57,7 +68,7 @@ impl ScreenCoord {
         ScreenCoord {
             x: self.x - other.x,
             y: self.y - other.y,
-            screen_size: self.screen_size,
+            z: self.z - other.z,
         }
     }
 
@@ -65,7 +76,7 @@ impl ScreenCoord {
         ScreenCoord {
             x: self.x * factor,
             y: self.y * factor,
-            screen_size: self.screen_size * factor,
+            z: self.z * factor,
         }
     }
 

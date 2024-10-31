@@ -1,6 +1,6 @@
 use super::{
     moves::{Effect, Move},
-    Board, Object,
+    Board, Object, Player,
 };
 use crate::geometry::{HexCoord, ScreenCoord};
 use crate::ui::Animation;
@@ -34,6 +34,19 @@ impl Game {
             }
         }
         self.board.next_player();
+    }
+
+    pub fn winner(&self) -> Option<Player> {
+        fn is_alive(board: &Board, player: Player) -> bool {
+            board.objects.iter().any(|o| o.player == player)
+        }
+        if !is_alive(&self.board, Player::A) {
+            return Some(Player::B);
+        }
+        if !is_alive(&self.board, Player::B) {
+            return Some(Player::A);
+        }
+        None
     }
 
     pub fn move_to(&mut self, object: &Object, to: &HexCoord, time: f32, duration: f32) {

@@ -1,9 +1,10 @@
-use std::{env, fs};
-
 use super::{control::ControlStatus, draw};
-use crate::engine::Game;
+use crate::engine::{Game, Player};
 use crate::geometry::ScreenCoord;
 use macroquad::prelude::*;
+use macroquad::Error;
+use miniquad::window::screen_size;
+use std::{env, fs};
 
 pub struct Renderer {
     pub fg_target: RenderTarget,
@@ -14,11 +15,11 @@ pub struct Renderer {
 }
 
 impl Renderer {
-    pub fn new(render_scale: f32) -> Renderer {
+    pub fn new(render_scale: f32) -> Result<Renderer, Error> {
         let fg_target = Renderer::create_target(render_scale);
         let bg_target = Renderer::create_target(render_scale);
         let path_to_crate = env!("CARGO_MANIFEST_DIR");
-        Renderer {
+        Ok(Renderer {
             fg_target: fg_target.clone(),
             bg_target: bg_target.clone(),
             fg_camera: Renderer::create_camera(&fg_target),
@@ -40,9 +41,8 @@ impl Renderer {
                     uniforms: vec![UniformDesc::new("canvasSize", UniformType::Float2)],
                     ..Default::default()
                 },
-            )
-            .unwrap(),
-        }
+            )?,
+        })
     }
 
     pub fn render(&self, game: &Game, control_status: &ControlStatus, time: f32) {
@@ -58,6 +58,17 @@ impl Renderer {
         gl_use_default_material();
         set_camera(&self.fg_camera);
         self.render_fg(game, control_status, time);
+
+        if let Some(winner) = game.winner() {
+            self.render_win(&winner, time);
+        }
+    }
+
+    fn render_win(&self, winner: &Player, _time: f32) {
+        let text = format!("{:?} rocks!", &winner);
+        let (w, h) = screen_size();
+        let text_width = 1.5 * h;
+        draw_text(&text, 0.5 * (w - text_width), 0.5 * h, 0.5 * h, ORANGE);
     }
 
     fn render_fg(&self, game: &Game, control_status: &ControlStatus, time: f32) {

@@ -21,7 +21,7 @@ fn window_conf() -> Conf {
 #[macroquad::main(window_conf)]
 async fn main() {
     let render_scale = 4.0;
-    let mut renderer = Renderer::new(render_scale);
+    let mut renderer = Renderer::new(render_scale).unwrap();
     let mut curr_window_size = screen_size();
 
     let start_time = Instant::now();
@@ -38,7 +38,10 @@ async fn main() {
         let curr_time = start_time.elapsed().as_secs_f32();
         game.on_tick_start(curr_time);
         if curr_window_size != screen_size() {
-            renderer = Renderer::new(render_scale);
+            match Renderer::new(render_scale) {
+                Ok(r) => renderer = r,
+                Err(msg) => println!("{}", msg),
+            };
             curr_window_size = screen_size();
         }
 
@@ -94,7 +97,12 @@ async fn main() {
 
         match get_event() {
             Some(KbdAction::Quit) => break,
-            Some(KbdAction::ReloadShader) => renderer = Renderer::new(render_scale),
+            Some(KbdAction::ReloadShader) => {
+                match Renderer::new(render_scale) {
+                    Ok(r) => renderer = r,
+                    Err(msg) => println!("{}", msg),
+                };
+            }
             _ => {}
         }
 

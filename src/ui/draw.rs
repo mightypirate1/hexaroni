@@ -67,7 +67,7 @@ fn draw_bordered_circle(pos: ScreenCoord, color: &Color, border_color: &Color, a
         pos.x,
         pos.y,
         0.80 * pos.screen_size,
-        with_alpha(border_color, alpha),
+        *border_color, // with_alpha(border_color, alpha),
     );
     draw_circle(
         pos.x,
@@ -81,7 +81,7 @@ fn border_color(color: &Color, object: &Object) -> Color {
     let blend = 0.5;
     let mixin_color = match &object.player {
         Player::A => BLACK,
-        Player::B => WHITE,
+        Player::B => SKYBLUE,
         _ => BLACK,
     };
     mix_color(color, &mixin_color, blend)

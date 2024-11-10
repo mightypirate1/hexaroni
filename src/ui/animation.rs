@@ -50,15 +50,11 @@ impl Animation {
                 duration,
             } => {
                 let progress = (time - start_time) / duration;
-                let heaven = ScreenCoord {
-                    x: 0.0,
-                    y: -pos.screen_size * 2.0 * progress,
-                    screen_size: pos.screen_size,
-                };
+                let heaven = pos.with_z(1000.);
                 if progress >= 1.0 {
                     heaven
                 } else {
-                    pos.add(&heaven).scale(1.0 - progress)
+                    pos.add(&heaven.scale(progress))
                 }
             }
             Animation::Wobble {
@@ -71,7 +67,7 @@ impl Animation {
                 let wobble = ScreenCoord {
                     x: amplitude * (speed * progress * 2.0 * std::f32::consts::PI).sin(),
                     y: amplitude * (speed * progress * 2.1823 * std::f32::consts::PI).cos(),
-                    screen_size: pos.screen_size,
+                    z: 0.0,
                 };
                 pos.add(&wobble)
             }

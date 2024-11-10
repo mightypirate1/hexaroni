@@ -1,7 +1,7 @@
 mod animation;
 pub mod control;
 mod drag;
-pub mod draw;
+pub mod meshes;
 pub mod rendering;
 
 pub use animation::Animation;

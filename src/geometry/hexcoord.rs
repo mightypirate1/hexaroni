@@ -5,13 +5,12 @@ pub struct HexCoord {
     pub board_size: usize,
 }
 
-
 impl HexCoord {
-    pub fn create(x: usize, y: usize, board_size: usize) -> HexCoord {
+    pub fn new(x: usize, y: usize, board_size: usize) -> HexCoord {
         if x >= board_size || y >= board_size {
             panic!("coord created out of bounds");
         }
-        HexCoord {x, y, board_size}
+        HexCoord { x, y, board_size }
     }
 
     pub fn get_all_directions(&self) -> Vec<usize> {
@@ -19,7 +18,7 @@ impl HexCoord {
     }
 
     #[allow(clippy::identity_op)]
-    pub fn get_neighbor(&self, direction: usize, distance: usize) -> Option<HexCoord>{
+    pub fn get_neighbor(&self, direction: usize, distance: usize) -> Option<HexCoord> {
         /*
         If I'm X, then these are the locations of my immediate neighbours:
 
@@ -29,7 +28,7 @@ impl HexCoord {
 
         In the matrix, this is expected to be:
 
-          2 1 
+          2 1
         3 X 0
         4 5
         */
@@ -63,7 +62,11 @@ impl HexCoord {
 
     fn as_option(x: i32, y: i32, board_size: usize) -> Option<HexCoord> {
         if (x >= 0 && x < board_size as i32) && (y >= 0 && y < board_size as i32) {
-            return Some(HexCoord{x: x as usize, y: y as usize, board_size});
+            return Some(HexCoord {
+                x: x as usize,
+                y: y as usize,
+                board_size,
+            });
         }
         None
     }

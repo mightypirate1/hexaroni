@@ -1,4 +1,4 @@
-#version 100
+#version 330
 attribute vec3 position;
 attribute vec2 texcoord;
 attribute vec4 color0;

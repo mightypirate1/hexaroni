@@ -4,6 +4,8 @@ use super::{
 };
 use crate::geometry::{HexCoord, ScreenCoord};
 use crate::ui::Animation;
+use itertools::Itertools;
+use macroquad::prelude::*;
 
 pub struct Game {
     pub board: Board,
@@ -13,7 +15,7 @@ impl Game {
     #[allow(clippy::new_without_default)]
     pub fn new() -> Game {
         Game {
-            board: Board::test_square(7),
+            board: Board::test_square(),
         }
     }
 
@@ -49,6 +51,13 @@ impl Game {
         None
     }
 
+    pub fn current_player(&self) -> Player {
+        match self.winner() {
+            None => self.board.current_player,
+            Some(player) => player,
+        }
+    }
+
     pub fn move_to(&mut self, object: &Object, to: &HexCoord, time: f32, duration: f32) {
         if let Some(obj) = self.get_obj_mut(object) {
             obj.animation = Some(Animation::Move {
@@ -68,20 +77,12 @@ impl Game {
             .find(|o| o.props.oid == object.props.oid)
     }
 
-    pub fn get_object_at_pos(&self, pos: ScreenCoord) -> Option<Object> {
-        self.board
-            .objects
-            .iter()
-            .find(|o| pos.is_close(o.get_screen_coord()) && !o.props.dead)
-            .cloned()
+    pub fn get_object_at_pos(&self, pos: &ScreenCoord) -> Option<Object> {
+        self.get_close_from_vec(pos, &self.board.objects)
     }
 
-    pub fn get_tile_at_pos(&self, pos: ScreenCoord) -> Option<Object> {
-        self.board
-            .tiles
-            .iter()
-            .find(|o| pos.is_close(o.get_screen_coord()) && !o.props.dead)
-            .cloned()
+    pub fn get_tile_at_pos(&self, pos: &ScreenCoord) -> Option<Object> {
+        self.get_close_from_vec(pos, &self.board.tiles)
     }
 
     /**
@@ -109,5 +110,31 @@ impl Game {
         for obj in kills {
             self.board.remove_object(&obj);
         }
+    }
+
+    pub fn screen_size(&self) -> f32 {
+        f32::min(
+            0.33 * screen_width() / self.board.size as f32,
+            0.58 * screen_height() / (1 + self.board.size) as f32,
+        )
+    }
+
+    /**
+     * Gets the closest object out of the ones that are closer than the size of the object
+     */
+    fn get_close_from_vec(&self, pos: &ScreenCoord, objects: &[Object]) -> Option<Object> {
+        let screen_size = self.screen_size();
+        let with_distances: Vec<(&Object, f32)> = objects
+            .iter()
+            .map(|o| (o, pos.dist_from(&o.get_screen_coord())))
+            .collect();
+        let detection = with_distances
+            .iter()
+            .filter(|(o, d)| *d < screen_size * o.props.size)
+            .sorted_by(|(_, d1), (_, d2)| f32::total_cmp(d1, d2))
+            .map(|(o, _)| o)
+            .next();
+
+        detection.map(|o| o.to_owned().to_owned())
     }
 }

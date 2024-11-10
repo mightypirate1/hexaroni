@@ -39,6 +39,7 @@ impl Object {
             coord,
             props: ObjectProps {
                 oid,
+                size: 1.1,
                 selectable: false,
                 draggable: false,
                 ..Default::default()

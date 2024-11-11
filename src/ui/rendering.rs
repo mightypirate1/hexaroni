@@ -121,11 +121,9 @@ impl Renderer {
             if drag.object.coord == t.coord {
                 color += RED.to_vec();
             }
-        } else {
-            if let Some(tgt) = &control_status.targeting {
-                if tgt == t {
-                    color += RED.to_vec();
-                }
+        } else if let Some(tgt) = &control_status.targeting {
+            if tgt == t {
+                color += RED.to_vec();
             }
         }
         if let Some(drag) = &control_status.dragging {
@@ -133,42 +131,36 @@ impl Renderer {
                 color += SKYBLUE.to_vec();
             }
         }
-        let mesh = meshes::tile_hex_mesh(t, &color, screen_size);
+        let screen_coord = ScreenCoord::from_hexcoord(&t.coord);
+        let pos = vec3(screen_coord.x, screen_coord.y, 0.0);
+        let size = t.props.size * screen_size;
+        let mesh = meshes::tile_hex_mesh(pos, size, &color);
         draw_mesh(&mesh);
     }
 
-    fn render_object(o: &Object, as_active: bool, screen_size: f32, time: f32) {
+    fn render_object(o: &Object, as_active: bool, screen_size: f32, _time: f32) {
         let player_color = match o.player {
             Player::A => PINK.to_vec(),
             Player::B => SKYBLUE.to_vec(),
             Player::God => BLACK.to_vec(),
         };
+
+        let screen_coord = ScreenCoord::from_hexcoord(&o.coord);
+        let pos = vec3(screen_coord.x, screen_coord.y, 0.0);
+        let size = o.props.size * screen_size;
+
         let mesh = match o.otype {
             ObjectType::Wall => {
                 let object_color = BLACK.to_vec();
-                meshes::obj_wall_mesh(o, &object_color, &player_color, screen_size, time)
+                meshes::obj_wall_mesh(pos, size, &object_color, &player_color)
             }
             ObjectType::Dasher => {
                 let object_color = BLACK.to_vec();
-                meshes::obj_jumper_mesh(
-                    o,
-                    &object_color,
-                    &player_color,
-                    as_active,
-                    screen_size,
-                    time,
-                )
+                meshes::obj_jumper_mesh(pos, size, &object_color, &player_color, as_active)
             }
             ObjectType::Jumper => {
                 let object_color = BLACK.to_vec();
-                meshes::obj_dasher_mesh(
-                    o,
-                    &object_color,
-                    &player_color,
-                    as_active,
-                    screen_size,
-                    time,
-                )
+                meshes::obj_dasher_mesh(pos, size, &object_color, &player_color, as_active)
             }
             _ => panic!("bad thing happen"),
         };

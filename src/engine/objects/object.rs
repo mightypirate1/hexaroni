@@ -1,6 +1,5 @@
 use crate::engine::{objects::ObjectProps, statuses::Status, ObjectType, Player};
 use crate::geometry::{HexCoord, ScreenCoord};
-use crate::ui::Animation;
 
 #[derive(Clone, Debug)]
 pub struct Object {
@@ -8,7 +7,6 @@ pub struct Object {
     pub coord: HexCoord,
     pub props: ObjectProps,
     pub statuses: Vec<Status>,
-    pub animation: Option<Animation>,
     pub player: Player,
 }
 
@@ -27,7 +25,6 @@ impl Object {
                 oid,
                 ..Default::default()
             },
-            animation: None,
             statuses: vec![],
             player,
         }
@@ -44,7 +41,6 @@ impl Object {
                 draggable: false,
                 ..Default::default()
             },
-            animation: None,
             statuses: vec![],
             player: Player::God,
         }
@@ -52,13 +48,6 @@ impl Object {
 
     pub fn owned_by(&self, player: &Player) -> bool {
         player == &self.player
-    }
-
-    pub fn get_display_pos(&self, time: f32) -> ScreenCoord {
-        match &self.animation {
-            Some(animation) => animation.get_pos(time),
-            None => ScreenCoord::from_hexcoord(&self.coord),
-        }
     }
 
     pub fn get_screen_coord(&self) -> ScreenCoord {

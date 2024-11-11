@@ -1,13 +1,9 @@
-use crate::engine::Object;
-use crate::geometry::ScreenCoord;
 use itertools::izip;
 use macroquad::prelude::*;
 
-pub fn tile_hex_mesh(tile: &Object, color: &Vec4, screen_size: f32) -> Mesh {
-    let screen_coord = ScreenCoord::from_hexcoord(&tile.coord);
-    let tile_pos = vec3(screen_coord.x, screen_coord.y, 0.0);
-    let thickness = 0.2 * screen_size;
+pub fn tile_hex_mesh(position: Vec3, size: f32, color: &Vec4) -> Mesh {
     let d = 0.86602;
+    let thickness = 0.2 * size;
     let offsets = [
         vec3(0.0, 1.0, 0.0),
         vec3(-d, 0.5, 0.0),
@@ -16,14 +12,12 @@ pub fn tile_hex_mesh(tile: &Object, color: &Vec4, screen_size: f32) -> Mesh {
         vec3(d, -0.5, 0.0),
         vec3(d, 0.5, 0.0),
     ];
-
-    let size = screen_size * tile.props.size;
     let corner_positions: Vec<Vec3> = offsets
         .iter()
-        .map(|&offset| tile_pos + size * offset)
+        .map(|&offset| position + size * offset)
         .collect();
     let center_vertex = [Vertex {
-        position: tile_pos,
+        position,
         uv: vec2(0.0, 1.0),
         color: Color::from_vec(*color).into(),
         normal: vec4(0.0, 0.0, 1.0, 1.0),
@@ -65,18 +59,8 @@ pub fn tile_hex_mesh(tile: &Object, color: &Vec4, screen_size: f32) -> Mesh {
     }
 }
 
-pub fn obj_wall_mesh(
-    object: &Object,
-    object_color: &Vec4,
-    player_color: &Vec4,
-    screen_size: f32,
-    time: f32,
-) -> Mesh {
-    let screen_coord = object.get_display_pos(time);
-    let pos = vec3(screen_coord.x, screen_coord.y, 0.0);
-    let size = object.props.size * screen_size;
+pub fn obj_wall_mesh(position: Vec3, size: f32, object_color: &Vec4, player_color: &Vec4) -> Mesh {
     let d = 0.5;
-
     let offsets = [
         vec3(d, d, 0.0),
         vec3(-d, d, 0.0),
@@ -87,7 +71,7 @@ pub fn obj_wall_mesh(
     let bottom_vertices: Vec<Vertex> = offsets
         .iter()
         .map(|o| Vertex {
-            position: pos + size * (*o),
+            position: position + size * (*o),
             uv: vec2(0.0, 0.0),
             normal: vec4(o.x, o.y, 0.0, 1.0),
             color: Color::from_vec(*object_color).into(),
@@ -96,7 +80,7 @@ pub fn obj_wall_mesh(
     let top_vertices: Vec<Vertex> = offsets
         .iter()
         .map(|o| Vertex {
-            position: pos + size * o.with_z(-d),
+            position: position + size * o.with_z(-d),
             uv: vec2(1.0, 1.0),
             normal: vec4(o.x, o.y, d, 1.0),
             color: Color::from_vec(*object_color).into(),
@@ -121,41 +105,36 @@ pub fn obj_wall_mesh(
 }
 
 pub fn obj_dasher_mesh(
-    object: &Object,
+    position: Vec3,
+    size: f32,
     object_color: &Vec4,
     player_color: &Vec4,
     as_active: bool,
-    screen_size: f32,
-    time: f32,
 ) -> Mesh {
-    let screen_coord = object.get_display_pos(time);
-    let pos = vec3(screen_coord.x, screen_coord.y, 0.0);
-    let size = object.props.size * screen_size;
-
     let t = 0.25 * 3.0_f32.sqrt();
     let d = 0.5 / 3.0_f32.sqrt();
 
     let vertices = vec![
         Vertex {
-            position: pos + size * vec3(0.5, d, 0.0),
+            position: position + size * vec3(0.5, d, 0.0),
             uv: vec2(0.0, 0.0),
             color: Color::from_vec(*object_color).into(),
             normal: vec4(0.0, 0.0, 1.0, 1.0),
         },
         Vertex {
-            position: pos + size * vec3(-0.5, d, 0.0),
+            position: position + size * vec3(-0.5, d, 0.0),
             uv: vec2(0.0, 0.0),
             color: Color::from_vec(*object_color).into(),
             normal: vec4(0.0, 0.0, 1.0, 1.0),
         },
         Vertex {
-            position: pos + size * vec3(0.0, -t, 0.0),
+            position: position + size * vec3(0.0, -t, 0.0),
             uv: vec2(0.0, 0.0),
             color: Color::from_vec(*object_color).into(),
             normal: vec4(0.0, 0.0, 1.0, 1.0),
         },
         Vertex {
-            position: pos + size * vec3(0.0, 0.0, -1.5),
+            position: position + size * vec3(0.0, 0.0, -1.5),
             uv: vec2(if as_active { 1.0 } else { 0.6 }, 0.0),
             color: Color::from_vec(*object_color).into(),
             normal: vec4(0.0, 0.0, 1.0, 1.0),
@@ -172,16 +151,12 @@ pub fn obj_dasher_mesh(
 }
 
 pub fn obj_jumper_mesh(
-    object: &Object,
+    position: Vec3,
+    size: f32,
     object_color: &Vec4,
     player_color: &Vec4,
     as_active: bool,
-    screen_size: f32,
-    time: f32,
 ) -> Mesh {
-    let screen_coord = object.get_display_pos(time);
-    let pos = vec3(screen_coord.x, screen_coord.y, 0.0);
-    let size = object.props.size * screen_size;
     let d = 0.4;
 
     let offsets = [
@@ -194,7 +169,7 @@ pub fn obj_jumper_mesh(
     let bottom_vertices: Vec<Vertex> = offsets
         .iter()
         .map(|o| Vertex {
-            position: pos + size * (*o),
+            position: position + size * (*o),
             uv: vec2(0.0, 0.0),
             normal: vec4(o.x, o.y, 0.0, 1.0),
             color: Color::from_vec(*object_color).into(),
@@ -203,14 +178,14 @@ pub fn obj_jumper_mesh(
     let middle_vertices: Vec<Vertex> = offsets
         .iter()
         .map(|o| Vertex {
-            position: pos + size * o.with_z(-d),
+            position: position + size * o.with_z(-d),
             uv: vec2(if as_active { 0.1 } else { 0.0 }, 0.0),
             normal: vec4(o.x, o.y, d, 1.0),
             color: Color::from_vec(*object_color).into(),
         })
         .collect();
     let top_vertex = [Vertex {
-        position: pos + size * vec3(0.0, 0.0, -2.0 * d),
+        position: position + size * vec3(0.0, 0.0, -2.0 * d),
         normal: vec4(0.0, 0.0, -1.0, 1.0),
         uv: vec2(if as_active { 1.0 } else { 0.6 }, 0.0),
         color: Color::from_vec(*object_color).into(),

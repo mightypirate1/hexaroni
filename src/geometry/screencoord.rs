@@ -1,7 +1,7 @@
 use super::HexCoord;
 use macroquad::prelude::*;
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 pub struct ScreenCoord {
     pub x: f32,
     pub y: f32,

@@ -1,7 +1,6 @@
-use super::control::ControlStatus;
 use crate::engine::{Game, Object, ObjectType, Player};
 use crate::geometry::ScreenCoord;
-use crate::ui::meshes;
+use crate::ui::{control::ControlStatus, rendering::meshes};
 use itertools::Itertools;
 use macroquad::prelude::*;
 use macroquad::Error;

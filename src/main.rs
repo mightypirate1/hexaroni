@@ -30,34 +30,7 @@ async fn main() {
     let mut camera_position = camera_target - vec3(-50.0, -150.0, 1000.0);
 
     loop {
-        // camera controls
-        if is_key_down(KeyCode::LeftAlt) {
-            let step = 0.99;
-            if is_key_down(KeyCode::Up) {
-                camera_position *= step;
-            }
-            if is_key_down(KeyCode::Down) {
-                camera_position /= step;
-            }
-        } else {
-            if is_key_down(KeyCode::Up) {
-                let orth = vec3(camera_position.y, -camera_position.x, 0.0).normalize();
-                camera_position = Mat4::from_axis_angle(orth, 0.01).project_point3(camera_position);
-            }
-            if is_key_down(KeyCode::Down) {
-                let orth = vec3(camera_position.y, -camera_position.x, 0.0).normalize();
-                camera_position =
-                    Mat4::from_axis_angle(orth, -0.01).project_point3(camera_position);
-            }
-            if is_key_down(KeyCode::Left) {
-                camera_position = Mat4::from_rotation_z(0.01).project_point3(camera_position);
-            }
-            if is_key_down(KeyCode::Right) {
-                camera_position = Mat4::from_rotation_z(-0.01).project_point3(camera_position);
-            }
-        }
-
-        // recreate shader on resize (todo: see if we can get rid of this)
+        // recreate shader on resize
         if curr_window_size != ScreenCoord::screen_size(game.board.size) {
             match Renderer::new(render_scale) {
                 Ok(r) => renderer = r,
@@ -68,8 +41,9 @@ async fn main() {
 
         // update control, camera, and game state
         let curr_time = start_time.elapsed().as_secs_f32();
-        let camera = renderer.create_camera(camera_position, camera_target, camera_up);
         game.on_tick_start(curr_time);
+        camera_position = control_camera(&camera_position);
+        let camera = renderer.create_camera(camera_position, camera_target, camera_up);
         control_status.update(&game, &camera);
 
         // handle events
@@ -88,7 +62,7 @@ async fn main() {
                 }
             }
             MouseAction::Drop => {
-                if let Some(drag) = &mut control_status.dragging {
+                if let Some(drag) = &control_status.dragging {
                     let obj = game.get_obj_mut(&drag.object).unwrap();
                     obj.remove_status(Status::Dragged);
                     if let Some(target_tile) = &control_status.targeting {
@@ -126,4 +100,33 @@ fn get_event() -> Option<KbdAction> {
         return Some(KbdAction::ReloadShader);
     }
     None
+}
+
+fn control_camera(camera_position: &Vec3) -> Vec3 {
+    let mut camera_position = *camera_position;
+    if is_key_down(KeyCode::LeftAlt) {
+        let step = 0.99;
+        if is_key_down(KeyCode::Up) {
+            camera_position *= step;
+        }
+        if is_key_down(KeyCode::Down) {
+            camera_position /= step;
+        }
+    } else {
+        if is_key_down(KeyCode::Up) {
+            let orth = vec3(camera_position.y, -camera_position.x, 0.0).normalize();
+            camera_position = Mat4::from_axis_angle(orth, 0.01).project_point3(camera_position);
+        }
+        if is_key_down(KeyCode::Down) {
+            let orth = vec3(camera_position.y, -camera_position.x, 0.0).normalize();
+            camera_position = Mat4::from_axis_angle(orth, -0.01).project_point3(camera_position);
+        }
+        if is_key_down(KeyCode::Left) {
+            camera_position = Mat4::from_rotation_z(0.01).project_point3(camera_position);
+        }
+        if is_key_down(KeyCode::Right) {
+            camera_position = Mat4::from_rotation_z(-0.01).project_point3(camera_position);
+        }
+    }
+    camera_position
 }

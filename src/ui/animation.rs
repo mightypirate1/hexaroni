@@ -2,9 +2,6 @@ use crate::geometry::ScreenCoord;
 
 #[derive(Copy, Clone, Debug)]
 pub enum Animation {
-    Idle {
-        pos: ScreenCoord,
-    },
     Kill {
         pos: ScreenCoord,
         start_time: f32,
@@ -27,7 +24,6 @@ pub enum Animation {
 impl Animation {
     pub fn get_pos(&self, time: f32) -> ScreenCoord {
         match self {
-            Animation::Idle { pos } => *pos,
             Animation::Move {
                 from,
                 to,

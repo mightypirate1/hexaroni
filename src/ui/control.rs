@@ -18,10 +18,15 @@ pub enum KbdAction {
 
 #[derive(Debug, Clone)]
 pub struct ControlStatus {
+    /// Current action; e.g. `Drag`, `Drop`.
     pub action: MouseAction,
+    /// Mouse position in pixel coords.
     pub mouse_pos: Option<ScreenCoord>,
+    /// Object under the cursor.
     pub hovering: Option<Object>,
+    /// Representation of an ongoing drag action.
     pub dragging: Option<Drag>,
+    /// Tile available for the current ongoing action.
     pub targeting: Option<Object>,
 }
 
@@ -40,7 +45,7 @@ impl Default for ControlStatus {
 impl ControlStatus {
     pub fn update(&mut self, game: &Game, camera: &Camera3D) {
         self.mouse_pos = ControlStatus::get_mouse_position(camera);
-        self.hovering = ControlStatus::get_hovered_object(&self.mouse_pos, game);
+        self.hovering = self.get_hovered_object(game);
         self.targeting = self.get_targeted_tile(game);
         self.action = self.update_mouse_action();
     }
@@ -78,7 +83,7 @@ impl ControlStatus {
 
     fn get_targeted_tile(&self, game: &Game) -> Option<Object> {
         match &self.hovering {
-            None => ControlStatus::get_hovered_tile(self.mouse_pos, game),
+            None => self.get_hovered_tile(game),
             Some(object) => {
                 let targetable_player = if self.action == MouseAction::None {
                     game.current_player()
@@ -95,16 +100,27 @@ impl ControlStatus {
         }
     }
 
-    fn get_hovered_object(mouse_pos: &Option<ScreenCoord>, game: &Game) -> Option<Object> {
-        match mouse_pos {
-            Some(coord) => game.get_object_at_pos(coord),
+    fn get_hovered_object(&self, game: &Game) -> Option<Object> {
+        match self.mouse_pos {
+            Some(coord) => game.get_object_at_pos(&coord),
             None => None,
         }
     }
 
-    fn get_hovered_tile(mouse_pos: Option<ScreenCoord>, game: &Game) -> Option<Object> {
-        match mouse_pos {
-            Some(coord) => game.get_tile_at_pos(&coord),
+    fn get_hovered_tile(&self, game: &Game) -> Option<Object> {
+        match self.mouse_pos {
+            Some(coord) => {
+                if let Some(tile) = game.get_tile_at_pos(&coord) {
+                    if let Some(obj) = game.board.contents(&tile.coord) {
+                        if !obj.owned_by(&game.current_player()) {
+                            return None;
+                        }
+                    }
+                    Some(tile)
+                } else {
+                    None
+                }
+            }
             None => None,
         }
     }

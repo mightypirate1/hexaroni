@@ -74,7 +74,7 @@ impl Renderer {
         control_status: &ControlStatus,
         time: f32,
     ) {
-        // initialize and render bg to bg_target
+        // initialize and render background
         gl_use_material(&self.bg_material);
         self.bg_material.set_uniform("canvas_size", screen_size());
         self.bg_material
@@ -82,6 +82,7 @@ impl Renderer {
         set_camera(&self.bg_camera); // bg_camera renders to the fg_target
         Renderer::draw_texture_from_target(&self.render_target);
 
+        // render board
         set_camera(camera);
         gl_use_material(&self.fg_material);
         Renderer::render_game(game, control_status, time);
@@ -89,6 +90,7 @@ impl Renderer {
         gl_use_default_material();
         Renderer::draw_texture_from_target(&self.render_target);
 
+        // win screen
         if let Some(player) = game.winner() {
             Renderer::render_win(self, &player, time)
         }
@@ -115,14 +117,15 @@ impl Renderer {
 
     fn render_tile(t: &Object, control_status: &ControlStatus, screen_size: f32) {
         let mut color = vec4(0.1, 0.1, 0.1, 1.0);
-        if let Some(hov) = &control_status.hovering {
-            if hov == t {
-                color += PINK.to_vec();
-            }
-        }
-        if let Some(tgt) = &control_status.targeting {
-            if tgt == t {
+        if let Some(drag) = &control_status.dragging {
+            if drag.object.coord == t.coord {
                 color += RED.to_vec();
+            }
+        } else {
+            if let Some(tgt) = &control_status.targeting {
+                if tgt == t {
+                    color += RED.to_vec();
+                }
             }
         }
         if let Some(drag) = &control_status.dragging {

@@ -1,7 +1,7 @@
 use super::HexCoord;
 use macroquad::prelude::*;
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 pub struct ScreenCoord {
     pub x: f32,
     pub y: f32,
@@ -31,7 +31,7 @@ impl ScreenCoord {
     }
 
     pub fn as_vec(&self) -> Vec3 {
-        vec3(self.x, self.y, self.y)
+        vec3(self.x, self.y, self.z)
     }
 
     pub fn with_x(&self, x: f32) -> ScreenCoord {

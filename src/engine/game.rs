@@ -1,9 +1,9 @@
 use super::{
     moves::{Effect, Move},
+    statuses::Status,
     Board, Object, Player,
 };
 use crate::geometry::{HexCoord, ScreenCoord};
-use crate::ui::Animation;
 use itertools::Itertools;
 use macroquad::prelude::*;
 
@@ -19,17 +19,19 @@ impl Game {
         }
     }
 
-    pub fn apply_move(&mut self, r#move: &Move, time: f32, duration: f32) {
-        self.move_to(&r#move.object, r#move.target(), time, duration);
+    pub fn apply_move(&mut self, r#move: &Move, time: f32, move_duration: f32) {
+        self.move_to(&r#move.object, r#move.target(), time, move_duration);
         for effect in &r#move.effects {
             match effect {
                 Effect::Kill { object } => {
                     if let Some(obj) = self.get_obj_mut(object) {
+                        let killer_coord = ScreenCoord::from_hexcoord(&r#move.object.coord);
+                        let obj_coord = ScreenCoord::from_hexcoord(&object.coord);
                         obj.props.dead = true;
-                        obj.animation = Some(Animation::Kill {
-                            pos: obj.get_display_pos(time),
+                        obj.statuses.push(Status::Killed {
+                            knockback: obj_coord.as_vec() - killer_coord.as_vec(),
                             start_time: time,
-                            duration,
+                            duration: 1.4 * move_duration,
                         });
                     }
                 }
@@ -60,8 +62,8 @@ impl Game {
 
     pub fn move_to(&mut self, object: &Object, to: &HexCoord, time: f32, duration: f32) {
         if let Some(obj) = self.get_obj_mut(object) {
-            obj.animation = Some(Animation::Move {
-                from: obj.get_display_pos(time),
+            obj.statuses.push(Status::Move {
+                from: ScreenCoord::from_hexcoord(&obj.coord),
                 to: ScreenCoord::from_hexcoord(to),
                 start_time: time,
                 duration,
@@ -92,21 +94,21 @@ impl Game {
      */
     pub fn on_tick_start(&mut self, time: f32) {
         let mut kills = vec![];
-        for obj in self
-            .board
+        self.board
             .tiles
             .iter_mut()
             .chain(self.board.objects.iter_mut())
-        {
-            if let Some(animation) = &obj.animation {
-                if animation.is_expired(time) {
-                    obj.animation = None;
-                    if obj.props.dead {
-                        kills.push(obj.clone());
-                    }
+            .for_each(|o| {
+                if o.props.dead && !o.statuses.iter().any(|s| !s.is_expired(time)) {
+                    kills.push(o.clone());
                 }
-            }
-        }
+                o.statuses = o
+                    .statuses
+                    .iter()
+                    .filter(|s| !s.is_expired(time))
+                    .cloned()
+                    .collect();
+            });
         for obj in kills {
             self.board.remove_object(&obj);
         }

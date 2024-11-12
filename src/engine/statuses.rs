@@ -1,6 +1,7 @@
 use crate::geometry::ScreenCoord;
+use macroquad::prelude::*;
 
-#[derive(Copy, Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum Status {
     Selected,
     Dragged,
@@ -8,6 +9,7 @@ pub enum Status {
     Targeted,
     Targetable,
     Killed {
+        knockback: Vec3,
         start_time: f32,
         duration: f32,
     },
@@ -18,7 +20,6 @@ pub enum Status {
         duration: f32,
     },
     Wobble {
-        pos: ScreenCoord,
         amplitude: f32,
         start_time: f32,
         speed: f32,
@@ -31,6 +32,7 @@ impl Status {
             Status::Killed {
                 start_time,
                 duration,
+                ..
             } => start_time + duration < time,
             Status::Move {
                 start_time,

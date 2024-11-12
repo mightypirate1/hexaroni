@@ -1,6 +1,6 @@
-use crate::engine::{Game, Object, ObjectType, Player};
+use crate::engine::{Game, Player};
 use crate::geometry::ScreenCoord;
-use crate::ui::{control::ControlStatus, rendering::meshes};
+use crate::ui::{control::ControlStatus, rendering::Renderable};
 use itertools::Itertools;
 use macroquad::prelude::*;
 use macroquad::Error;
@@ -84,7 +84,7 @@ impl Renderer {
         // render board
         set_camera(camera);
         gl_use_material(&self.fg_material);
-        Renderer::render_game(game, control_status, time);
+        Renderer::render_game(game, camera, control_status, time);
         set_default_camera();
         gl_use_default_material();
         Renderer::draw_texture_from_target(&self.render_target);
@@ -95,75 +95,33 @@ impl Renderer {
         }
     }
 
-    fn render_game(game: &Game, control_status: &ControlStatus, time: f32) {
+    fn render_game(game: &Game, camera: &Camera3D, control_status: &ControlStatus, time: f32) {
         let screen_size = ScreenCoord::screen_size(game.board.size);
-        game.board
+        let tile_renderables: Vec<Renderable> = game
+            .board
             .tiles
             .iter()
-            .sorted_by(|a, b| a.coord.y.cmp(&b.coord.y))
-            .for_each(|t| {
-                Renderer::render_tile(t, control_status, screen_size);
-            });
-        game.board
+            .map(|t| Renderable::from_tile(t, control_status, screen_size, time))
+            .collect();
+        let obj_renderables: Vec<Renderable> = game
+            .board
             .objects
             .iter()
-            .sorted_by(|a, b| a.coord.y.cmp(&b.coord.y))
-            .for_each(|o| {
+            .map(|o| {
                 let as_active = game.board.current_player == o.player;
-                Renderer::render_object(o, as_active, screen_size, time);
-            });
-    }
-
-    fn render_tile(t: &Object, control_status: &ControlStatus, screen_size: f32) {
-        let mut color = vec4(0.1, 0.1, 0.1, 1.0);
-        if let Some(drag) = &control_status.dragging {
-            if drag.object.coord == t.coord {
-                color += RED.to_vec();
-            }
-        } else if let Some(tgt) = &control_status.targeting {
-            if tgt == t {
-                color += RED.to_vec();
-            }
-        }
-        if let Some(drag) = &control_status.dragging {
-            if drag.has_move_to(&t.coord) {
-                color += SKYBLUE.to_vec();
-            }
-        }
-        let screen_coord = ScreenCoord::from_hexcoord(&t.coord);
-        let pos = vec3(screen_coord.x, screen_coord.y, 0.0);
-        let size = t.props.size * screen_size;
-        let mesh = meshes::tile_hex_mesh(pos, size, &color);
-        draw_mesh(&mesh);
-    }
-
-    fn render_object(o: &Object, as_active: bool, screen_size: f32, _time: f32) {
-        let player_color = match o.player {
-            Player::A => PINK.to_vec(),
-            Player::B => SKYBLUE.to_vec(),
-            Player::God => BLACK.to_vec(),
-        };
-
-        let screen_coord = ScreenCoord::from_hexcoord(&o.coord);
-        let pos = vec3(screen_coord.x, screen_coord.y, 0.0);
-        let size = o.props.size * screen_size;
-
-        let mesh = match o.otype {
-            ObjectType::Wall => {
-                let object_color = BLACK.to_vec();
-                meshes::obj_wall_mesh(pos, size, &object_color, &player_color)
-            }
-            ObjectType::Dasher => {
-                let object_color = BLACK.to_vec();
-                meshes::obj_jumper_mesh(pos, size, &object_color, &player_color, as_active)
-            }
-            ObjectType::Jumper => {
-                let object_color = BLACK.to_vec();
-                meshes::obj_dasher_mesh(pos, size, &object_color, &player_color, as_active)
-            }
-            _ => panic!("bad thing happen"),
-        };
-        draw_mesh(&mesh);
+                Renderable::from_object(o, as_active, screen_size, time)
+            })
+            .collect();
+        tile_renderables
+            .iter()
+            .chain(&obj_renderables)
+            .sorted_by(|a, b| {
+                f32::total_cmp(
+                    &(b.position - camera.position).length(),
+                    &(a.position - camera.position).length(),
+                )
+            })
+            .for_each(|renderable| draw_mesh(&renderable.mesh));
     }
 
     fn render_win(&self, winner: &Player, _time: f32) {

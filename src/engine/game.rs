@@ -19,16 +19,19 @@ impl Game {
         }
     }
 
-    pub fn apply_move(&mut self, r#move: &Move, time: f32, duration: f32) {
-        self.move_to(&r#move.object, r#move.target(), time, duration);
+    pub fn apply_move(&mut self, r#move: &Move, time: f32, move_duration: f32) {
+        self.move_to(&r#move.object, r#move.target(), time, move_duration);
         for effect in &r#move.effects {
             match effect {
                 Effect::Kill { object } => {
                     if let Some(obj) = self.get_obj_mut(object) {
+                        let killer_coord = ScreenCoord::from_hexcoord(&r#move.object.coord);
+                        let obj_coord = ScreenCoord::from_hexcoord(&object.coord);
                         obj.props.dead = true;
                         obj.statuses.push(Status::Killed {
+                            knockback: obj_coord.as_vec() - killer_coord.as_vec(),
                             start_time: time,
-                            duration,
+                            duration: 1.4 * move_duration,
                         });
                     }
                 }
@@ -96,14 +99,14 @@ impl Game {
             .iter_mut()
             .chain(self.board.objects.iter_mut())
             .for_each(|o| {
-                if o.props.dead {
+                if o.props.dead && !o.statuses.iter().any(|s| !s.is_expired(time)) {
                     kills.push(o.clone());
                 }
                 o.statuses = o
                     .statuses
                     .iter()
                     .filter(|s| !s.is_expired(time))
-                    .copied()
+                    .cloned()
                     .collect();
             });
         for obj in kills {

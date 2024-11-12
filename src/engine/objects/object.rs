@@ -63,6 +63,6 @@ impl Object {
     }
 
     pub fn remove_status(&mut self, status: Status) {
-        self.statuses.retain(|&s| s != status);
+        self.statuses.retain(|s| s != &status);
     }
 }

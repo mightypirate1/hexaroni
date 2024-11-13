@@ -15,22 +15,26 @@ impl Renderable {
         screen_size: f32,
         time: f32,
     ) -> Renderable {
+        let mut as_highlighted = false;
         let mut color = vec4(0.1, 0.1, 0.1, 1.0);
         if let Some(drag) = &control_status.dragging {
             if drag.object.coord == tile.coord {
                 color += RED.to_vec();
+                as_highlighted = true;
             }
         } else if let Some(tgt) = &control_status.targeting {
             if tgt == tile {
                 color += RED.to_vec();
+                as_highlighted = true;
             }
         }
         if let Some(drag) = &control_status.dragging {
             if drag.has_move_to(&tile.coord) {
                 color += SKYBLUE.to_vec();
+                as_highlighted = true;
             }
         }
-        meshes::tile_hex_mesh(tile, &color, screen_size, time)
+        meshes::tile_hex_mesh(tile, &color, as_highlighted, screen_size, time)
     }
 
     pub fn from_object(
@@ -52,7 +56,7 @@ impl Renderable {
             }
             ObjectType::Dasher => {
                 let object_color = BLACK.to_vec();
-                meshes::obj_jumper_mesh(
+                meshes::obj_dasher_mesh(
                     object,
                     &object_color,
                     &player_color,
@@ -63,7 +67,7 @@ impl Renderable {
             }
             ObjectType::Jumper => {
                 let object_color = BLACK.to_vec();
-                meshes::obj_dasher_mesh(
+                meshes::obj_jumper_mesh(
                     object,
                     &object_color,
                     &player_color,

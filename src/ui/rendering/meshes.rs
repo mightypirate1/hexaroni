@@ -3,11 +3,18 @@ use crate::ui::rendering::{transforms, Renderable};
 use itertools::izip;
 use macroquad::prelude::*;
 
-pub fn tile_hex_mesh(tile: &Object, color: &Vec4, screen_size: f32, time: f32) -> Renderable {
+pub fn tile_hex_mesh(
+    tile: &Object,
+    color: &Vec4,
+    as_highlighted: bool,
+    screen_size: f32,
+    time: f32,
+) -> Renderable {
     let model_matrix = transforms::create_model_matrix(tile, time);
     let size = tile.props.size * screen_size;
     let d = 0.86602;
     let thickness = 0.2 * size;
+    let glow = if as_highlighted { 1.0 } else { 0.0 };
 
     let position = model_matrix.project_point3(vec3(0.0, 0.0, 0.0));
     let offsets = [
@@ -23,7 +30,7 @@ pub fn tile_hex_mesh(tile: &Object, color: &Vec4, screen_size: f32, time: f32) -
         position,
         uv: vec2(0.0, 1.0),
         color: Color::from_vec(*color).into(),
-        normal: vec4(0.0, 0.0, 1.0, 1.0),
+        normal: vec3(0.0, 0.0, 1.0).normalize().extend(glow),
     }];
     let corner_vertices: Vec<Vertex> = corner_positions
         .iter()
@@ -31,7 +38,7 @@ pub fn tile_hex_mesh(tile: &Object, color: &Vec4, screen_size: f32, time: f32) -
             position: model_matrix.project_point3(*cp),
             uv: vec2(1.0, 1.0),
             color: Color::from_vec(*color).into(),
-            normal: vec4(0.0, 0.0, 1.0, 1.0),
+            normal: vec3(0.0, 0.0, 1.0).normalize().extend(glow),
         })
         .collect();
     let bottom_corner_vertices: Vec<Vertex> = izip!(&offsets, &corner_positions)
@@ -39,7 +46,7 @@ pub fn tile_hex_mesh(tile: &Object, color: &Vec4, screen_size: f32, time: f32) -
             position: model_matrix.project_point3(*cp + vec3(0.0, 0.0, thickness)),
             uv: vec2(1.0, 0.0),
             color: Color::from_vec(*color).into(),
-            normal: o.extend(1.0),
+            normal: o.normalize().extend(glow),
         })
         .collect();
 
@@ -87,7 +94,7 @@ pub fn obj_wall_mesh(
         .map(|o| Vertex {
             position: model_matrix.project_point3(size * (*o)),
             uv: vec2(0.0, 0.0),
-            normal: vec4(o.x, o.y, 0.0, 1.0),
+            normal: o.normalize().extend(0.0),
             color: Color::from_vec(*object_color).into(),
         })
         .collect();
@@ -96,7 +103,7 @@ pub fn obj_wall_mesh(
         .map(|o| Vertex {
             position: model_matrix.project_point3(size * o.with_z(-d)),
             uv: vec2(1.0, 1.0),
-            normal: vec4(o.x, o.y, d, 1.0),
+            normal: o.normalize().extend(0.0),
             color: Color::from_vec(*object_color).into(),
         })
         .collect();
@@ -121,7 +128,7 @@ pub fn obj_wall_mesh(
     }
 }
 
-pub fn obj_dasher_mesh(
+pub fn obj_jumper_mesh(
     object: &Object,
     object_color: &Vec4,
     player_color: &Vec4,
@@ -135,32 +142,23 @@ pub fn obj_dasher_mesh(
     let d = 0.5 / 3.0_f32.sqrt();
 
     let position = model_matrix.project_point3(vec3(0.0, 0.0, 0.0));
-    let vertices = vec![
-        Vertex {
-            position: model_matrix.project_point3(size * vec3(0.5, d, 0.0)),
+    let offsets = [vec3(0.5, d, 0.0), vec3(-0.5, d, 0.0), vec3(0.0, -t, 0.0)];
+    let top_vertex = [Vertex {
+        position: model_matrix.project_point3(size * vec3(0.0, 0.0, -1.5)),
+        uv: vec2(if as_active { 1.2 } else { 0.7 }, 0.0),
+        color: Color::from_vec(*object_color).into(),
+        normal: vec3(0.0, 0.0, -1.0).normalize().extend(0.0),
+    }];
+    let bottom_vertices: Vec<Vertex> = offsets
+        .iter()
+        .map(|o| Vertex {
+            position: model_matrix.project_point3(size * (*o)),
             uv: vec2(0.0, 0.0),
             color: Color::from_vec(*object_color).into(),
-            normal: vec4(0.0, 0.0, 1.0, 1.0),
-        },
-        Vertex {
-            position: model_matrix.project_point3(size * vec3(-0.5, d, 0.0)),
-            uv: vec2(0.0, 0.0),
-            color: Color::from_vec(*object_color).into(),
-            normal: vec4(0.0, 0.0, 1.0, 1.0),
-        },
-        Vertex {
-            position: model_matrix.project_point3(size * vec3(0.0, -t, 0.0)),
-            uv: vec2(0.0, 0.0),
-            color: Color::from_vec(*object_color).into(),
-            normal: vec4(0.0, 0.0, 1.0, 1.0),
-        },
-        Vertex {
-            position: model_matrix.project_point3(size * vec3(0.0, 0.0, -1.5)),
-            uv: vec2(if as_active { 1.0 } else { 0.6 }, 0.0),
-            color: Color::from_vec(*object_color).into(),
-            normal: vec4(0.0, 0.0, 1.0, 1.0),
-        },
-    ];
+            normal: o.normalize().extend(0.0),
+        })
+        .collect();
+    let vertices = bottom_vertices.iter().chain(&top_vertex).copied().collect();
     let indices = vec![0, 1, 3, 1, 2, 3, 2, 0, 3];
     let texture = texture_from_2_colors(object_color, player_color);
 
@@ -174,7 +172,7 @@ pub fn obj_dasher_mesh(
     }
 }
 
-pub fn obj_jumper_mesh(
+pub fn obj_dasher_mesh(
     object: &Object,
     object_color: &Vec4,
     player_color: &Vec4,
@@ -199,7 +197,7 @@ pub fn obj_jumper_mesh(
         .map(|o| Vertex {
             position: model_matrix.project_point3(size * (*o)),
             uv: vec2(0.0, 0.0),
-            normal: vec4(o.x, o.y, 0.0, 1.0),
+            normal: o.extend(0.0).normalize(),
             color: Color::from_vec(*object_color).into(),
         })
         .collect();
@@ -208,13 +206,13 @@ pub fn obj_jumper_mesh(
         .map(|o| Vertex {
             position: model_matrix.project_point3(size * o.with_z(-d)),
             uv: vec2(if as_active { 0.1 } else { 0.0 }, 0.0),
-            normal: vec4(o.x, o.y, d, 1.0),
+            normal: vec4(o.x, o.y, d, 1.0).normalize(),
             color: Color::from_vec(*object_color).into(),
         })
         .collect();
     let top_vertex = [Vertex {
         position: model_matrix.project_point3(size * vec3(0.0, 0.0, -2.0 * d)),
-        normal: vec4(0.0, 0.0, -1.0, 1.0),
+        normal: vec4(0.0, 0.0, -1.0, 1.0).normalize(),
         uv: vec2(if as_active { 1.0 } else { 0.6 }, 0.0),
         color: Color::from_vec(*object_color).into(),
     }];

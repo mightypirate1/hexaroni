@@ -41,8 +41,8 @@ impl Renderer {
                         ..Default::default()
                     },
                     uniforms: vec![
-                        UniformDesc::new("canvas_size", UniformType::Float2),
-                        UniformDesc::new("render_scale", UniformType::Float1),
+                        UniformDesc::new("light_pos", UniformType::Float3),
+                        UniformDesc::new("cam_pos", UniformType::Float3),
                     ],
                     ..Default::default()
                 },
@@ -84,6 +84,10 @@ impl Renderer {
         // render board
         set_camera(camera);
         gl_use_material(&self.fg_material);
+        let light_pos = camera.position; // same as camera in cam space
+        let light_pos = Mat4::from_rotation_z(time).project_point3(light_pos);
+        self.fg_material.set_uniform("light_pos", light_pos);
+        self.fg_material.set_uniform("cam_pos", camera.position);
         Renderer::render_game(game, camera, control_status, time);
         set_default_camera();
         gl_use_default_material();

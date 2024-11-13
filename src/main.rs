@@ -29,6 +29,7 @@ async fn main() {
     let mut camera_position = CONF.camera_position;
     let start_time = Instant::now();
 
+    game.start_move_timer(CONF.play_move_timeout);
     loop {
         // recreate shader on resize
         if curr_window_size != ScreenCoord::screen_size(game.board.size) {

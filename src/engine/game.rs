@@ -7,9 +7,24 @@ use crate::config::CONF;
 use crate::geometry::{HexCoord, ScreenCoord};
 use itertools::Itertools;
 use macroquad::prelude::*;
+use std::time::Instant;
 
 pub struct Game {
     pub board: Board,
+    last_move_time: Instant,
+    timed_moves: bool,
+    allowed_think_time: f32,
+}
+
+impl Default for Game {
+    fn default() -> Self {
+        Game {
+            board: Board::test_square(),
+            last_move_time: Instant::now(),
+            timed_moves: false,
+            allowed_think_time: 0.0,
+        }
+    }
 }
 
 impl Game {
@@ -17,10 +32,20 @@ impl Game {
     pub fn new() -> Game {
         Game {
             board: Board::test_square(),
+            ..Default::default()
         }
     }
 
+    pub fn start_move_timer(&mut self, allowed_think_time: f32) {
+        self.last_move_time = Instant::now();
+        self.timed_moves = true;
+        self.allowed_think_time = allowed_think_time;
+    }
+
     pub fn apply_move(&mut self, r#move: &Move, time: f32, move_duration: f32) {
+        if !r#move.object.owned_by(&self.current_player()) {
+            return;
+        }
         self.move_to(&r#move.object, r#move.target(), time, move_duration);
         for effect in &r#move.effects {
             match effect {
@@ -39,6 +64,7 @@ impl Game {
             }
         }
         self.board.next_player();
+        self.last_move_time = Instant::now();
     }
 
     pub fn winner(&self) -> Option<Player> {
@@ -112,6 +138,12 @@ impl Game {
             });
         for obj in kills {
             self.board.remove_object(&obj);
+        }
+
+        if self.timed_moves && self.last_move_time.elapsed().as_secs_f32() > self.allowed_think_time
+        {
+            self.last_move_time = Instant::now();
+            self.board.current_player = self.board.current_player.opponent();
         }
     }
 

@@ -1,3 +1,4 @@
+use hexaroni::config::CONF;
 use hexaroni::engine::{statuses::Status, Game};
 use hexaroni::geometry::ScreenCoord;
 use hexaroni::ui::{
@@ -21,18 +22,17 @@ fn window_conf() -> Conf {
 async fn main() {
     let mut game = Game::new();
     let mut control_status = ControlStatus::default();
-    let start_time = Instant::now();
-    let render_scale = 1.0;
-    let mut renderer = Renderer::new(render_scale).unwrap();
+    let mut renderer = Renderer::new().unwrap();
     let mut curr_window_size = ScreenCoord::screen_size(game.board.size);
-    let camera_up = vec3(0.0, 0.0, 1.0);
-    let camera_target = vec3(0.0, 0.0, 0.0);
-    let mut camera_position = camera_target - vec3(-50.0, -150.0, 1000.0);
+    let camera_up = CONF.camera_up;
+    let camera_target = CONF.camera_target;
+    let mut camera_position = CONF.camera_position;
+    let start_time = Instant::now();
 
     loop {
         // recreate shader on resize
         if curr_window_size != ScreenCoord::screen_size(game.board.size) {
-            match Renderer::new(render_scale) {
+            match Renderer::new() {
                 Ok(r) => renderer = r,
                 Err(msg) => println!("{}", msg),
             };
@@ -67,7 +67,7 @@ async fn main() {
                     obj.remove_status(Status::Dragged);
                     if let Some(target_tile) = &control_status.targeting {
                         if let Some(r#move) = drag.get_move_to(&target_tile.coord) {
-                            game.apply_move(r#move, curr_time, 0.25);
+                            game.apply_move(r#move, curr_time, CONF.move_application_time);
                         }
                     }
                 }
@@ -79,7 +79,7 @@ async fn main() {
         match get_event() {
             Some(KbdAction::Quit) => break,
             Some(KbdAction::ReloadShader) => {
-                match Renderer::new(render_scale) {
+                match Renderer::new() {
                     Ok(r) => renderer = r,
                     Err(msg) => println!("{}", msg),
                 };

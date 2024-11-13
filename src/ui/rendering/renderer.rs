@@ -1,3 +1,4 @@
+use crate::config::CONF;
 use crate::engine::{Game, Player};
 use crate::geometry::ScreenCoord;
 use crate::ui::{control::ControlStatus, rendering::Renderable};
@@ -17,7 +18,8 @@ pub struct Renderer {
 }
 
 impl Renderer {
-    pub fn new(render_scale: f32) -> Result<Renderer, Error> {
+    pub fn new() -> Result<Renderer, Error> {
+        let render_scale = CONF.render_scale;
         let render_target = Renderer::create_target(render_scale);
         Ok(Renderer {
             render_scale,

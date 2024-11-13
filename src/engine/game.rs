@@ -3,6 +3,7 @@ use super::{
     statuses::Status,
     Board, Object, Player,
 };
+use crate::config::CONF;
 use crate::geometry::{HexCoord, ScreenCoord};
 use itertools::Itertools;
 use macroquad::prelude::*;
@@ -31,7 +32,7 @@ impl Game {
                         obj.statuses.push(Status::Killed {
                             knockback: obj_coord.as_vec() - killer_coord.as_vec(),
                             start_time: time,
-                            duration: 1.4 * move_duration,
+                            duration: CONF.kill_duration,
                         });
                     }
                 }

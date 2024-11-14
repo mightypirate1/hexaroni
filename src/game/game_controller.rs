@@ -110,7 +110,6 @@ impl GameController {
     - resets expired animations to none
      */
     pub fn on_tick_start(&mut self, time: f32) {
-        println!("{:?}", self.game_state);
         let mut kills = vec![];
         self.board
             .tiles

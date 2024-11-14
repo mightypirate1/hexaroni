@@ -1,7 +1,7 @@
 use crate::engine::Player;
 use std::time::Instant;
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub enum GameState {
     Editing, // anticipating the map-editor
     Waiting,

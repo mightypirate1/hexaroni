@@ -1,6 +1,6 @@
 use crate::config::CONF;
 use crate::engine::Player;
-use crate::game::GameController;
+use crate::game::{GameController, GameState};
 use crate::geometry::ScreenCoord;
 use crate::ui::{control::ControlStatus, rendering::Renderable};
 use itertools::Itertools;
@@ -96,9 +96,11 @@ impl Renderer {
         gl_use_default_material();
         Renderer::draw_texture_from_target(&self.render_target);
 
-        // win screen
+        // status text
         if let Some(player) = game.game_state.winner() {
-            Renderer::render_win(self, &player, time)
+            Renderer::render_win(&player, time);
+        } else if game.game_state == GameState::Waiting {
+            Renderer::render_waiting(time);
         }
     }
 
@@ -136,11 +138,18 @@ impl Renderer {
             .for_each(|renderable| draw_mesh(&renderable.mesh));
     }
 
-    fn render_win(&self, winner: &Player, _time: f32) {
+    fn render_win(winner: &Player, _time: f32) {
         let text = format!("{:?} rocks!", &winner);
         let (w, h) = screen_size();
         let text_width = 1.2 * h;
         draw_text(&text, 0.25 * (w - text_width), 0.5 * h, 0.5 * h, ORANGE);
+    }
+
+    fn render_waiting(_time: f32) {
+        let text = "Press enter to play.";
+        let (w, h) = screen_size();
+        let text_width = 1.2 * h;
+        draw_text(text, 0.25 * (w - text_width), 0.5 * h, 0.15 * h, ORANGE);
     }
 
     fn draw_texture_from_target(target: &RenderTarget) {

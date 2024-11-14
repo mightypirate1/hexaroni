@@ -30,7 +30,6 @@ async fn main() {
     let mut camera_position = CONF.camera_position;
     let start_time = Instant::now();
 
-    game.start_game();
     loop {
         // recreate shader on resize
         if curr_window_size != ScreenCoord::screen_size(game.board.size) {
@@ -79,6 +78,7 @@ async fn main() {
         }
 
         match get_event() {
+            Some(KbdAction::StartGame) => game.start_game(),
             Some(KbdAction::Quit) => break,
             Some(KbdAction::ReloadShader) => {
                 match Renderer::new() {
@@ -100,6 +100,9 @@ fn get_event() -> Option<KbdAction> {
     }
     if is_key_pressed(KeyCode::Space) {
         return Some(KbdAction::ReloadShader);
+    }
+    if is_key_pressed(KeyCode::Enter) {
+        return Some(KbdAction::StartGame);
     }
     None
 }

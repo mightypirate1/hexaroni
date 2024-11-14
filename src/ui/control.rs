@@ -15,6 +15,7 @@ pub enum MouseAction {
 pub enum KbdAction {
     Quit,
     ReloadShader,
+    StartGame,
 }
 
 #[derive(Debug, Clone)]

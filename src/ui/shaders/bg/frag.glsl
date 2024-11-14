@@ -1,7 +1,8 @@
 #version 330
 precision lowp float;
-uniform vec2 canvas_size;
 uniform vec4 _Time;
+
+uniform vec2 canvas_size;
 uniform float render_scale;
 
 const int n_iters = 25;

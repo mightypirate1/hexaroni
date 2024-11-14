@@ -1,49 +1,53 @@
-use super::{
+use crate::config::CONF;
+use crate::engine::{
     moves::{Effect, Move},
     statuses::Status,
     Board, Object, Player,
 };
-use crate::config::CONF;
 use crate::geometry::{HexCoord, ScreenCoord};
 use itertools::Itertools;
 use macroquad::prelude::*;
 use std::time::Instant;
 
-pub struct Game {
+use super::{GameSettings, GameState};
+
+pub struct GameController {
     pub board: Board,
-    last_move_time: Instant,
-    timed_moves: bool,
-    allowed_think_time: f32,
+    pub game_state: GameState,
+    pub game_settings: GameSettings,
 }
 
-impl Default for Game {
+impl Default for GameController {
     fn default() -> Self {
-        Game {
+        GameController {
             board: Board::test_square(),
-            last_move_time: Instant::now(),
-            timed_moves: false,
-            allowed_think_time: 0.0,
+            game_state: GameState::Waiting,
+            game_settings: GameSettings::default(),
         }
     }
 }
 
-impl Game {
-    #[allow(clippy::new_without_default)]
-    pub fn new() -> Game {
-        Game {
+impl GameController {
+    pub fn new() -> GameController {
+        GameController {
             board: Board::test_square(),
             ..Default::default()
         }
     }
 
-    pub fn start_move_timer(&mut self, allowed_think_time: f32) {
-        self.last_move_time = Instant::now();
-        self.timed_moves = true;
-        self.allowed_think_time = allowed_think_time;
+    pub fn start_game(&mut self) {
+        if let GameState::Waiting = self.game_state {
+            self.game_state = GameState::Playing {
+                current_player: self.game_settings.starting_player,
+                move_start: Instant::now(),
+            }
+        } else {
+            panic!("attempted to start game from state: {:?}", self.game_state);
+        }
     }
 
     pub fn apply_move(&mut self, r#move: &Move, time: f32, move_duration: f32) {
-        if !r#move.object.owned_by(&self.current_player()) {
+        if !(self.game_state.allows_moves() && r#move.object.owned_by(&self.current_player())) {
             return;
         }
         self.move_to(&r#move.object, r#move.target(), time, move_duration);
@@ -63,39 +67,25 @@ impl Game {
                 }
             }
         }
-        self.board.next_player();
-        self.last_move_time = Instant::now();
-    }
-
-    pub fn winner(&self) -> Option<Player> {
-        fn is_alive(board: &Board, player: Player) -> bool {
-            board.objects.iter().any(|o| o.player == player)
+        let opponents_is_dead = !self
+            .board
+            .objects
+            .iter()
+            .any(|o| o.owned_by(&self.current_player().opponent()) && !o.props.dead);
+        if opponents_is_dead {
+            self.game_state = GameState::GameOver {
+                winner: self.current_player(),
+            };
+        } else {
+            self.game_state = self.game_state.on_apply_move();
         }
-        if !is_alive(&self.board, Player::A) {
-            return Some(Player::B);
-        }
-        if !is_alive(&self.board, Player::B) {
-            return Some(Player::A);
-        }
-        None
     }
 
     pub fn current_player(&self) -> Player {
-        match self.winner() {
-            None => self.board.current_player,
-            Some(player) => player,
-        }
-    }
-
-    pub fn move_to(&mut self, object: &Object, to: &HexCoord, time: f32, duration: f32) {
-        if let Some(obj) = self.get_obj_mut(object) {
-            obj.statuses.push(Status::Move {
-                from: ScreenCoord::from_hexcoord(&obj.coord),
-                to: ScreenCoord::from_hexcoord(to),
-                start_time: time,
-                duration,
-            });
-            obj.set_coord(to);
+        match self.game_state {
+            GameState::Playing { current_player, .. } => current_player,
+            GameState::GameOver { winner } => winner,
+            _ => Player::God,
         }
     }
 
@@ -120,6 +110,7 @@ impl Game {
     - resets expired animations to none
      */
     pub fn on_tick_start(&mut self, time: f32) {
+        println!("{:?}", self.game_state);
         let mut kills = vec![];
         self.board
             .tiles
@@ -140,10 +131,10 @@ impl Game {
             self.board.remove_object(&obj);
         }
 
-        if self.timed_moves && self.last_move_time.elapsed().as_secs_f32() > self.allowed_think_time
-        {
-            self.last_move_time = Instant::now();
-            self.board.current_player = self.board.current_player.opponent();
+        if let GameState::Playing { move_start, .. } = self.game_state {
+            if move_start.elapsed().as_secs_f32() > self.game_settings.play_move_timeout {
+                self.game_state = self.game_state.on_apply_move();
+            }
         }
     }
 
@@ -152,6 +143,18 @@ impl Game {
             0.33 * screen_width() / self.board.size as f32,
             0.58 * screen_height() / (1 + self.board.size) as f32,
         )
+    }
+
+    fn move_to(&mut self, object: &Object, to: &HexCoord, time: f32, duration: f32) {
+        if let Some(obj) = self.get_obj_mut(object) {
+            obj.statuses.push(Status::Move {
+                from: ScreenCoord::from_hexcoord(&obj.coord),
+                to: ScreenCoord::from_hexcoord(to),
+                start_time: time,
+                duration,
+            });
+            obj.set_coord(to);
+        }
     }
 
     /**

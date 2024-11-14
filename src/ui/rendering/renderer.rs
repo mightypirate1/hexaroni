@@ -1,5 +1,6 @@
 use crate::config::CONF;
-use crate::engine::{Game, Player};
+use crate::engine::Player;
+use crate::game::GameController;
 use crate::geometry::ScreenCoord;
 use crate::ui::{control::ControlStatus, rendering::Renderable};
 use itertools::Itertools;
@@ -70,7 +71,7 @@ impl Renderer {
 
     pub fn render(
         &mut self,
-        game: &Game,
+        game: &GameController,
         camera: &Camera3D,
         control_status: &ControlStatus,
         time: f32,
@@ -96,12 +97,17 @@ impl Renderer {
         Renderer::draw_texture_from_target(&self.render_target);
 
         // win screen
-        if let Some(player) = game.winner() {
+        if let Some(player) = game.game_state.winner() {
             Renderer::render_win(self, &player, time)
         }
     }
 
-    fn render_game(game: &Game, camera: &Camera3D, control_status: &ControlStatus, time: f32) {
+    fn render_game(
+        game: &GameController,
+        camera: &Camera3D,
+        control_status: &ControlStatus,
+        time: f32,
+    ) {
         let screen_size = ScreenCoord::screen_size(game.board.size);
         let tile_renderables: Vec<Renderable> = game
             .board
@@ -114,7 +120,7 @@ impl Renderer {
             .objects
             .iter()
             .map(|o| {
-                let as_active = game.board.current_player == o.player;
+                let as_active = game.current_player() == o.player;
                 Renderable::from_object(o, as_active, screen_size, time)
             })
             .collect();

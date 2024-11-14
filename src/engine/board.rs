@@ -7,7 +7,6 @@ pub struct Board {
     pub size: usize,
     pub tiles: Vec<Object>,
     pub objects: Vec<Object>,
-    pub current_player: Player,
 }
 
 impl Board {
@@ -80,7 +79,6 @@ impl Board {
             size,
             tiles,
             objects: pieces,
-            current_player: Player::A,
         }
     }
 
@@ -108,10 +106,6 @@ impl Board {
 
     pub fn owner(&self, coord: &HexCoord) -> Option<Player> {
         self.contents(coord).map(|o| o.player)
-    }
-
-    pub fn next_player(&mut self) {
-        self.current_player = self.current_player.opponent();
     }
 
     fn tile_coords(&self) -> Vec<HexCoord> {
@@ -142,5 +136,10 @@ impl Board {
                 panic!("Object placed on non-tile: oid={:?}", o.props.oid);
             }
         });
+        for player in [Player::A, Player::B] {
+            if !objects.iter().any(|o| o.owned_by(&player)) {
+                panic!("No pieces for {:?}", player);
+            }
+        }
     }
 }

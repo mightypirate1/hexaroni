@@ -84,7 +84,7 @@ pub fn tile_hex_mesh(
         position,
         uv: vec2(0.0, 1.0),
         color: Color::from_vec(*color).into(),
-        normal: vec3(0.0, 0.0, 1.0).normalize().extend(glow),
+        normal: vec3(0.0, 0.0, -1.0).normalize().extend(glow),
     }];
     let corner_vertices: Vec<Vertex> = corner_positions
         .iter()
@@ -92,7 +92,7 @@ pub fn tile_hex_mesh(
             position: model_matrix.project_point3(*cp),
             uv: vec2(1.0, 1.0),
             color: Color::from_vec(*color).into(),
-            normal: vec3(0.0, 0.0, 1.0).normalize().extend(glow),
+            normal: cp.with_z(-1.0).normalize().extend(glow),
         })
         .collect();
     let bottom_corner_vertices: Vec<Vertex> = izip!(&offsets, &corner_positions)
@@ -134,14 +134,14 @@ pub fn obj_wall_mesh(
 ) -> Renderable {
     let model_matrix = transforms::create_model_matrix(object, time);
     let size = screen_size * object.props.size;
-    let d = 0.5;
+    let d = 0.71;
 
     let position = model_matrix.project_point3(vec3(0.0, 0.0, 0.0));
     let offsets = [
-        vec3(d, d, 0.0),
-        vec3(-d, d, 0.0),
-        vec3(-d, -d, 0.0),
-        vec3(d, -d, 0.0),
+        vec3(d, 0.0, 0.0),
+        vec3(0.0, d, 0.0),
+        vec3(-d, 0.0, 0.0),
+        vec3(0.0, -d, 0.0),
     ];
     let bottom_vertices: Vec<Vertex> = offsets
         .iter()
@@ -157,7 +157,7 @@ pub fn obj_wall_mesh(
         .map(|o| Vertex {
             position: model_matrix.project_point3(size * o.with_z(-d)),
             uv: vec2(1.0, 1.0),
-            normal: o.normalize().extend(0.0),
+            normal: o.with_z(-d).normalize().extend(0.0),
             color: Color::from_vec(*object_color).into(),
         })
         .collect();

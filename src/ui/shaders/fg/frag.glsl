@@ -13,7 +13,7 @@ varying vec3 v_frag_to_cam;
 
 vec4 raw_color(vec4 color, float height, float center_dist) {
     // lid shade
-    float clamp_val = 0.6 + 0.2 * frag_glow;
+    float clamp_val = 0.8 + 0.1 * frag_glow;
     float lid_shade = clamp(center_dist, clamp_val, 1.0);
     lid_shade = (lid_shade - 0.4) / (clamp_val);
     // side shade
@@ -57,11 +57,11 @@ void main() {
     vec3 to_cam = normalize(v_frag_to_cam);
 
     vec4 color = base_color();
-    const float c_ambient = 0.6;
-    float c_diffuse = 2.8 * diffuse_weight(normal, to_light);
-    float c_specular = 0.2 * specular_weight(normal, to_light, to_cam, 98.0);
+    float c_ambient = 0.6 + 0.2 * frag_glow;
+    float c_diffuse = 1.6 * diffuse_weight(normal, to_light);
+    float c_specular = 0.025 * specular_weight(normal, to_light, to_cam, 8.0);
 
-    vec3 shaded_color = color.rgb * max(frag_glow, c_ambient + c_diffuse);
+    vec3 shaded_color = color.rgb * (c_ambient + c_diffuse);
     vec3 specular_color = (1 - 0.8 * frag_glow) * c_specular * vec3(1);
 
     gl_FragColor = vec4(shaded_color + specular_color, 1);

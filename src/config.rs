@@ -29,7 +29,7 @@ impl Default for Config {
                 (Player::God, BLACK.to_vec()),
             ]),
             object_color: HashMap::from([
-                (ObjectType::Wall, vec4(0.02, 0.02, 0.02, 1.0)),
+                (ObjectType::Wall, vec4(0.06, 0.06, 0.06, 1.0)),
                 (ObjectType::Dasher, BLACK.to_vec()),
                 (ObjectType::Jumper, BLACK.to_vec()),
             ]),

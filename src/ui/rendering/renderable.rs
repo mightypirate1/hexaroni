@@ -49,7 +49,7 @@ impl Renderable {
 
         match object.otype {
             ObjectType::Wall => {
-                meshes::obj_wall_mesh(object, object_color, object_color, screen_size, time)
+                meshes::obj_wall_mesh(object, player_color, player_color, screen_size, time)
             }
             ObjectType::Dasher => meshes::obj_dasher_mesh(
                 object,

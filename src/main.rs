@@ -1,4 +1,6 @@
-use hexaroni::engine::{statuses::Status, Game};
+use hexaroni::config::CONF;
+use hexaroni::engine::statuses::Status;
+use hexaroni::game::GameController;
 use hexaroni::geometry::ScreenCoord;
 use hexaroni::ui::{
     control::{ControlStatus, KbdAction, MouseAction},
@@ -19,20 +21,19 @@ fn window_conf() -> Conf {
 
 #[macroquad::main(window_conf)]
 async fn main() {
-    let mut game = Game::new();
+    let mut game = GameController::new();
     let mut control_status = ControlStatus::default();
-    let start_time = Instant::now();
-    let render_scale = 1.0;
-    let mut renderer = Renderer::new(render_scale).unwrap();
+    let mut renderer = Renderer::new().unwrap();
     let mut curr_window_size = ScreenCoord::screen_size(game.board.size);
-    let camera_up = vec3(0.0, 0.0, 1.0);
-    let camera_target = vec3(0.0, 0.0, 0.0);
-    let mut camera_position = camera_target - vec3(-50.0, -150.0, 1000.0);
+    let camera_up = CONF.camera_up;
+    let camera_target = CONF.camera_target;
+    let mut camera_position = CONF.camera_position;
+    let start_time = Instant::now();
 
     loop {
         // recreate shader on resize
         if curr_window_size != ScreenCoord::screen_size(game.board.size) {
-            match Renderer::new(render_scale) {
+            match Renderer::new() {
                 Ok(r) => renderer = r,
                 Err(msg) => println!("{}", msg),
             };
@@ -53,7 +54,7 @@ async fn main() {
                     // if we are not dragging already, we set the hovered object to dragging
                     if let Some(ref hovered) = control_status.hovering {
                         if hovered.props.draggable
-                            && hovered.owned_by(&game.board.current_player)
+                            && hovered.owned_by(&game.current_player())
                             && !hovered.props.dead
                         {
                             control_status.dragging = Some(Drag::create(hovered, &mut game));
@@ -67,7 +68,7 @@ async fn main() {
                     obj.remove_status(Status::Dragged);
                     if let Some(target_tile) = &control_status.targeting {
                         if let Some(r#move) = drag.get_move_to(&target_tile.coord) {
-                            game.apply_move(r#move, curr_time, 0.25);
+                            game.apply_move(r#move, curr_time, CONF.move_application_time);
                         }
                     }
                 }
@@ -77,9 +78,11 @@ async fn main() {
         }
 
         match get_event() {
+            Some(KbdAction::StartGame) => game.start_game(),
+            Some(KbdAction::Reset) => game = GameController::new(),
             Some(KbdAction::Quit) => break,
             Some(KbdAction::ReloadShader) => {
-                match Renderer::new(render_scale) {
+                match Renderer::new() {
                     Ok(r) => renderer = r,
                     Err(msg) => println!("{}", msg),
                 };
@@ -98,6 +101,12 @@ fn get_event() -> Option<KbdAction> {
     }
     if is_key_pressed(KeyCode::Space) {
         return Some(KbdAction::ReloadShader);
+    }
+    if is_key_pressed(KeyCode::Enter) {
+        return Some(KbdAction::StartGame);
+    }
+    if is_key_pressed(KeyCode::R) {
+        return Some(KbdAction::Reset);
     }
     None
 }

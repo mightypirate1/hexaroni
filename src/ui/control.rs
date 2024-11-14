@@ -1,4 +1,5 @@
-use crate::engine::{Game, Object};
+use crate::engine::Object;
+use crate::game::GameController;
 use crate::geometry::ScreenCoord;
 use crate::ui::Drag;
 use macroquad::camera::Camera3D;
@@ -14,6 +15,8 @@ pub enum MouseAction {
 pub enum KbdAction {
     Quit,
     ReloadShader,
+    StartGame,
+    Reset,
 }
 
 #[derive(Debug, Clone)]
@@ -43,7 +46,7 @@ impl Default for ControlStatus {
 }
 
 impl ControlStatus {
-    pub fn update(&mut self, game: &Game, camera: &Camera3D) {
+    pub fn update(&mut self, game: &GameController, camera: &Camera3D) {
         self.mouse_pos = ControlStatus::get_mouse_position(camera);
         self.hovering = self.get_hovered_object(game);
         self.targeting = self.get_targeted_tile(game);
@@ -81,7 +84,7 @@ impl ControlStatus {
         None
     }
 
-    fn get_targeted_tile(&self, game: &Game) -> Option<Object> {
+    fn get_targeted_tile(&self, game: &GameController) -> Option<Object> {
         match &self.hovering {
             None => self.get_hovered_tile(game),
             Some(object) => {
@@ -100,14 +103,14 @@ impl ControlStatus {
         }
     }
 
-    fn get_hovered_object(&self, game: &Game) -> Option<Object> {
+    fn get_hovered_object(&self, game: &GameController) -> Option<Object> {
         match self.mouse_pos {
             Some(coord) => game.get_object_at_pos(&coord),
             None => None,
         }
     }
 
-    fn get_hovered_tile(&self, game: &Game) -> Option<Object> {
+    fn get_hovered_tile(&self, game: &GameController) -> Option<Object> {
         match self.mouse_pos {
             Some(coord) => {
                 if let Some(tile) = game.get_tile_at_pos(&coord) {

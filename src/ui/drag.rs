@@ -1,4 +1,5 @@
-use crate::engine::{moves, moves::Move, statuses::Status, Game, Object};
+use crate::engine::{moves, moves::Move, statuses::Status, Object};
+use crate::game::GameController;
 use crate::geometry::HexCoord;
 
 #[derive(Debug, Clone)]
@@ -9,7 +10,7 @@ pub struct Drag {
 }
 
 impl Drag {
-    pub fn create(object: &Object, game: &mut Game) -> Drag {
+    pub fn create(object: &Object, game: &mut GameController) -> Drag {
         let obj = game.get_obj_mut(object).unwrap();
         obj.statuses.push(Status::Dragged);
 

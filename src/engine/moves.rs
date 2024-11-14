@@ -34,41 +34,8 @@ pub fn legal_moves(object: &Object, board: &Board) -> Vec<Move> {
     match object.otype {
         ObjectType::Dasher => dasher_moves(object, board),
         ObjectType::Jumper => jumper_moves(object, board),
-        ObjectType::Wall => wall_moves(object, board),
         _ => vec![],
     }
-}
-
-fn wall_moves(object: &Object, board: &Board) -> Vec<Move> {
-    let walks: Vec<Move> = object
-        .coord
-        .get_all_neighbours(1)
-        .iter()
-        .filter(|c| board.is_empty(c))
-        .map(|&c| Move::new(object.clone(), vec![object.coord, c], vec![]))
-        .collect();
-    let kills: Vec<Move> = object
-        .coord
-        .get_all_neighbours(1)
-        .iter()
-        .filter(|c| {
-            let target = board.contents(c);
-            match target {
-                Some(t) => !t.owned_by(&object.player),
-                None => false,
-            }
-        })
-        .map(|&c| {
-            Move::new(
-                object.clone(),
-                vec![object.coord, c],
-                vec![Effect::Kill {
-                    object: board.contents(&c).unwrap().clone(),
-                }],
-            )
-        })
-        .collect();
-    walks.into_iter().chain(kills).collect()
 }
 
 fn jumper_moves(object: &Object, board: &Board) -> Vec<Move> {

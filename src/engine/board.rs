@@ -12,12 +12,7 @@ pub struct Board {
 impl Board {
     pub fn test_square() -> Board {
         fn quick_wall(oid: usize, x: usize, y: usize, board_size: usize) -> Object {
-            Object::new(
-                oid,
-                ObjectType::Wall,
-                HexCoord::new(x, y, board_size),
-                Player::God,
-            )
+            Object::new_wall(oid, HexCoord::new(x, y, board_size))
         }
         fn quick_piece(
             oid: usize,

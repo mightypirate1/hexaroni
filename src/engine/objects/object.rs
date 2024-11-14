@@ -46,6 +46,22 @@ impl Object {
         }
     }
 
+    pub fn new_wall(oid: usize, coord: HexCoord) -> Object {
+        Object {
+            otype: ObjectType::Wall,
+            coord,
+            props: ObjectProps {
+                oid,
+                size: 1.1,
+                selectable: false,
+                draggable: false,
+                ..Default::default()
+            },
+            statuses: vec![],
+            player: Player::God,
+        }
+    }
+
     pub fn owned_by(&self, player: &Player) -> bool {
         player == &self.player
     }

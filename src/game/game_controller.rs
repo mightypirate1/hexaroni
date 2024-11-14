@@ -37,9 +37,8 @@ impl GameController {
 
     pub fn start_game(&mut self) {
         if let GameState::Waiting = self.game_state {
-            self.game_state = GameState::Playing {
-                current_player: self.game_settings.starting_player,
-                move_start: Instant::now(),
+            self.game_state = GameState::Countdown {
+                started_at: Instant::now(),
             }
         } else {
             panic!("attempted to start game from state: {:?}", self.game_state);
@@ -130,10 +129,21 @@ impl GameController {
             self.board.remove_object(&obj);
         }
 
-        if let GameState::Playing { move_start, .. } = self.game_state {
-            if move_start.elapsed().as_secs_f32() > self.game_settings.play_move_timeout {
-                self.game_state = self.game_state.on_apply_move();
+        match self.game_state {
+            GameState::Countdown { started_at } => {
+                if started_at.elapsed().as_secs_f32() > self.game_settings.game_start_countdown {
+                    self.game_state = GameState::Playing {
+                        current_player: self.game_settings.starting_player,
+                        move_start: Instant::now(),
+                    }
+                }
             }
+            GameState::Playing { move_start, .. } => {
+                if move_start.elapsed().as_secs_f32() > self.game_settings.play_move_timeout {
+                    self.game_state = self.game_state.on_apply_move();
+                }
+            }
+            _ => {}
         }
     }
 

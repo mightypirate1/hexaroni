@@ -3,6 +3,60 @@ use crate::ui::rendering::{transforms, Renderable};
 use itertools::izip;
 use macroquad::prelude::*;
 
+/**
+ Assumes use of default camera.
+
+ All arguments are in fractions of screen size.
+*/
+pub fn hud_quad(x0: f32, y0: f32, x1: f32, y1: f32) -> Mesh {
+    let x0 = screen_width() * x0;
+    let x1 = screen_width() * x1;
+    let y0 = screen_height() * y0;
+    let y1 = screen_height() * y1;
+    Mesh {
+        vertices: vec![
+            Vertex {
+                position: vec3(x0, y0, 0.0),
+                uv: vec2(0.0, 0.0),
+                color: BLACK.into(),
+                normal: vec4(0.0, 0.0, 0.0, 1.0),
+            },
+            Vertex {
+                position: vec3(x1, y0, 0.0),
+                uv: vec2(1.0, 0.0),
+                color: BLACK.into(),
+                normal: vec4(0.0, 0.0, 0.0, 1.0),
+            },
+            Vertex {
+                position: vec3(x0, y1, 0.0),
+                uv: vec2(0.0, 1.0),
+                color: BLACK.into(),
+                normal: vec4(0.0, 0.0, 0.0, 1.0),
+            },
+            Vertex {
+                position: vec3(x0, y1, 0.0),
+                uv: vec2(0.0, 1.0),
+                color: BLACK.into(),
+                normal: vec4(0.0, 0.0, 0.0, 1.0),
+            },
+            Vertex {
+                position: vec3(x1, y0, 0.0),
+                uv: vec2(1.0, 0.0),
+                color: BLACK.into(),
+                normal: vec4(0.0, 0.0, 0.0, 1.0),
+            },
+            Vertex {
+                position: vec3(x1, y1, 0.0),
+                uv: vec2(1.0, 1.0),
+                color: BLACK.into(),
+                normal: vec4(0.0, 0.0, 0.0, 1.0),
+            },
+        ],
+        indices: vec![0, 1, 2, 3, 4, 5],
+        texture: None,
+    }
+}
+
 pub fn tile_hex_mesh(
     tile: &Object,
     color: &Vec4,

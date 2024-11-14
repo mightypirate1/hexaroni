@@ -16,6 +16,7 @@ pub enum KbdAction {
     Quit,
     ReloadShader,
     StartGame,
+    Reset,
 }
 
 #[derive(Debug, Clone)]

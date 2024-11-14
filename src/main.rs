@@ -79,6 +79,7 @@ async fn main() {
 
         match get_event() {
             Some(KbdAction::StartGame) => game.start_game(),
+            Some(KbdAction::Reset) => game = GameController::new(),
             Some(KbdAction::Quit) => break,
             Some(KbdAction::ReloadShader) => {
                 match Renderer::new() {
@@ -103,6 +104,9 @@ fn get_event() -> Option<KbdAction> {
     }
     if is_key_pressed(KeyCode::Enter) {
         return Some(KbdAction::StartGame);
+    }
+    if is_key_pressed(KeyCode::R) {
+        return Some(KbdAction::Reset);
     }
     None
 }

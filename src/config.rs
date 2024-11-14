@@ -6,6 +6,7 @@ use std::collections::HashMap;
 pub struct Config {
     pub player_color: HashMap<Player, Vec4>,
     pub object_color: HashMap<ObjectType, Vec4>,
+    pub game_start_countdown: f32,
     pub play_move_timeout: f32,
     pub move_application_time: f32,
     pub kill_duration: f32,
@@ -32,6 +33,7 @@ impl Default for Config {
                 (ObjectType::Dasher, BLACK.to_vec()),
                 (ObjectType::Jumper, BLACK.to_vec()),
             ]),
+            game_start_countdown: 2.5,
             play_move_timeout: 5.0,
             move_application_time: 0.25,
             kill_duration: 0.4,

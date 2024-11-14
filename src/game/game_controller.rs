@@ -84,7 +84,7 @@ impl GameController {
         match self.game_state {
             GameState::Playing { current_player, .. } => current_player,
             GameState::GameOver { winner } => winner,
-            _ => Player::God,
+            _ => Player::A,
         }
     }
 

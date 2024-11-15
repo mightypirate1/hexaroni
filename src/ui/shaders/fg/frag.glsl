@@ -65,5 +65,4 @@ void main() {
     vec3 specular_color = (1 - 0.8 * frag_glow) * c_specular * vec3(1);
 
     gl_FragColor = vec4(shaded_color + specular_color, 1);
-    // gl_FragColor = vec4(normal, 1);
 }

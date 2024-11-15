@@ -1,4 +1,5 @@
-use super::{Board, Object, ObjectType};
+use crate::engine::statuses::Effect;
+use crate::engine::{Board, Object, ObjectType};
 use crate::geometry::HexCoord;
 
 #[derive(Debug, Clone)]
@@ -6,11 +7,6 @@ pub struct Move {
     pub object: Object,
     pub path: Vec<HexCoord>,
     pub effects: Vec<Effect>,
-}
-
-#[derive(Debug, Clone)]
-pub enum Effect {
-    Kill { object: Object },
 }
 
 impl Move {
@@ -43,7 +39,10 @@ fn jumper_moves(object: &Object, board: &Board) -> Vec<Move> {
         let effects = match board.contents(&target) {
             Some(t) => {
                 if t.owned_by(&obj.player.opponent()) {
-                    vec![Effect::Kill { object: t.clone() }]
+                    vec![Effect::Kill {
+                        victim: t.clone(),
+                        killer: Some(obj.clone()),
+                    }]
                 } else {
                     vec![]
                 }
@@ -104,7 +103,8 @@ fn dasher_moves(object: &Object, board: &Board) -> Vec<Move> {
                     }
                     if let Some(target) = board.contents(&n) {
                         effects.push(Effect::Kill {
-                            object: target.clone(),
+                            victim: target.clone(),
+                            killer: Some(obj.clone()),
                         });
                     }
                 }

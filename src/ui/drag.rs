@@ -11,9 +11,18 @@ pub struct Drag {
 
 impl Drag {
     pub fn create(object: &Object, game: &mut GameController) -> Drag {
-        let obj = game.get_obj_mut(object).unwrap();
-        obj.statuses.push(Status::Dragged);
+        if !game.game_state.allows_moves() {
+            return Drag {
+                object: object.clone(),
+                targets: vec![],
+                moves: vec![],
+            };
+        }
 
+        game.board
+            .get_as_mut(object)
+            .unwrap()
+            .add_status(&Status::new_dragged());
         let moves = moves::legal_moves(object, &game.board);
         Drag {
             object: object.clone(),

@@ -1,5 +1,5 @@
 use hexaroni::config::CONF;
-use hexaroni::engine::statuses::Status;
+use hexaroni::engine::statuses::StatusType;
 use hexaroni::game::GameController;
 use hexaroni::geometry::ScreenCoord;
 use hexaroni::ui::{
@@ -42,7 +42,7 @@ async fn main() {
 
         // update control, camera, and game state
         let curr_time = start_time.elapsed().as_secs_f32();
-        game.on_tick_start(curr_time);
+        game.tick(curr_time);
         camera_position = control_camera(&camera_position);
         let camera = renderer.create_camera(camera_position, camera_target, camera_up);
         control_status.update(&game, &camera);
@@ -64,8 +64,10 @@ async fn main() {
             }
             MouseAction::Drop => {
                 if let Some(drag) = &control_status.dragging {
-                    let obj = game.get_obj_mut(&drag.object).unwrap();
-                    obj.remove_status(Status::Dragged);
+                    game.board
+                        .get_as_mut(&drag.object)
+                        .unwrap()
+                        .remove_status(&StatusType::Dragged);
                     if let Some(target_tile) = &control_status.targeting {
                         if let Some(r#move) = drag.get_move_to(&target_tile.coord) {
                             game.apply_move(r#move, curr_time, CONF.move_application_time);

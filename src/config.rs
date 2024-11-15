@@ -4,6 +4,7 @@ use macroquad::prelude::*;
 use std::collections::HashMap;
 
 pub struct Config {
+    pub starting_player: Player,
     pub player_color: HashMap<Player, Vec4>,
     pub object_color: HashMap<ObjectType, Vec4>,
     pub game_start_countdown: f32,
@@ -18,11 +19,13 @@ pub struct Config {
     pub camera_position: Vec3,
     pub camera_target: Vec3,
     pub render_scale: f32,
+    pub falling_tiles_heads_up: usize,
 }
 
 impl Default for Config {
     fn default() -> Config {
         Config {
+            starting_player: Player::A,
             player_color: HashMap::from([
                 (Player::A, PINK.to_vec()),
                 (Player::B, SKYBLUE.to_vec()),
@@ -45,6 +48,7 @@ impl Default for Config {
             camera_target: vec3(0.0, 0.0, 0.0),
             camera_position: -vec3(-50.0, -150.0, 1000.0),
             render_scale: 1.0,
+            falling_tiles_heads_up: 2,
         }
     }
 }

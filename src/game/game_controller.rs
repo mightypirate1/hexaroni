@@ -1,9 +1,9 @@
 use crate::config::CONF;
 use crate::engine::{
-    moves::Move,
     statuses::{Effect, Status},
     Board, Object, Player,
 };
+use crate::game::moves::Move;
 use crate::geometry::{HexCoord, ScreenCoord};
 use itertools::Itertools;
 use macroquad::prelude::*;

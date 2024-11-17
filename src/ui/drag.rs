@@ -1,12 +1,15 @@
-use crate::engine::{moves, moves::Move, statuses::Status, Object};
-use crate::game::GameController;
+use crate::engine::{statuses::Status, Object};
+use crate::game::{
+    moves::{legal_moves, Move},
+    GameController,
+};
 use crate::geometry::HexCoord;
 
 #[derive(Debug, Clone)]
 pub struct Drag {
     pub object: Object,
     pub targets: Vec<HexCoord>,
-    moves: Vec<moves::Move>,
+    moves: Vec<Move>,
 }
 
 impl Drag {
@@ -23,7 +26,7 @@ impl Drag {
             .get_as_mut(object)
             .unwrap()
             .add_status(&Status::new_dragged());
-        let moves = moves::legal_moves(object, &game.board);
+        let moves = legal_moves(object, &game.board);
         Drag {
             object: object.clone(),
             targets: moves.iter().map(|m| *m.target()).collect(),
@@ -39,7 +42,7 @@ impl Drag {
         self.targets.contains(target)
     }
 
-    pub fn get_move(&self, target: &HexCoord) -> Option<&moves::Move> {
+    pub fn get_move(&self, target: &HexCoord) -> Option<&Move> {
         self.moves.iter().find(|m| m.target() == target)
     }
 }

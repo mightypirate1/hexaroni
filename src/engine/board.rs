@@ -34,7 +34,12 @@ impl Board {
             .flat_map(move |x| {
                 (0..board_size).map(move |y| {
                     let coord = HexCoord::new(x, y, board_size);
-                    Object::new_tile(y * board_size + x, coord, 3 + x + y)
+                    let lifespan = if x.abs_diff(3) + y.abs_diff(3) < 2 {
+                        7 + 3 * x.abs_diff(3) + 3 * y.abs_diff(3)
+                    } else {
+                        21 - x.abs_diff(3) - y.abs_diff(3)
+                    };
+                    Object::new_tile(y * board_size + x, coord, lifespan)
                 })
             })
             .collect();

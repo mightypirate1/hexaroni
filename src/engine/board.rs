@@ -1,12 +1,12 @@
 use std::collections::HashSet;
 
-use super::{Object, ObjectType, Player};
+use crate::engine::{statuses::Status, Object, ObjectType, Player};
 use crate::geometry::HexCoord;
 
+#[derive(Clone)]
 pub struct Board {
     pub size: usize,
-    pub tiles: Vec<Object>,
-    pub objects: Vec<Object>,
+    objects: Vec<Object>,
 }
 
 impl Board {
@@ -34,7 +34,12 @@ impl Board {
             .flat_map(move |x| {
                 (0..board_size).map(move |y| {
                     let coord = HexCoord::new(x, y, board_size);
-                    Object::new_tile(y * board_size + x, coord)
+                    let lifespan = if x.abs_diff(3) + y.abs_diff(3) < 2 {
+                        7 + 3 * x.abs_diff(3) + 3 * y.abs_diff(3)
+                    } else {
+                        21 - x.abs_diff(3) - y.abs_diff(3)
+                    };
+                    Object::new_tile(y * board_size + x, coord, lifespan)
                 })
             })
             .collect();
@@ -65,16 +70,53 @@ impl Board {
             quick_piece(oid + 20, 0, 5, ObjectType::Jumper, board_size),
             quick_piece(oid + 21, 6, 1, ObjectType::Jumper, board_size),
         ];
-        Board::new(board_size, tiles, pieces)
+        Board::new(
+            board_size,
+            pieces.iter().chain(tiles.iter()).cloned().collect(),
+        )
     }
 
-    pub fn new(size: usize, tiles: Vec<Object>, pieces: Vec<Object>) -> Board {
-        Board::verify(&tiles, &pieces);
-        Board {
-            size,
-            tiles,
-            objects: pieces,
-        }
+    pub fn new(size: usize, objects: Vec<Object>) -> Board {
+        Board::verify(&objects);
+        Board { size, objects }
+    }
+
+    pub fn tiles(&self) -> Vec<&Object> {
+        self.objects.iter().filter(|o| o.is_tile()).collect()
+    }
+
+    pub fn tiles_mut(&mut self) -> Vec<&mut Object> {
+        self.objects.iter_mut().filter(|o| o.is_tile()).collect()
+    }
+
+    pub fn pieces(&self) -> Vec<&Object> {
+        self.objects.iter().filter(|o| !o.is_tile()).collect()
+    }
+
+    pub fn pieces_mut(&mut self) -> Vec<&mut Object> {
+        self.objects.iter_mut().filter(|o| !o.is_tile()).collect()
+    }
+
+    pub fn objects(&self) -> Vec<&Object> {
+        self.objects.iter().collect()
+    }
+
+    pub fn objects_mut(&mut self) -> Vec<&mut Object> {
+        self.objects.iter_mut().collect()
+    }
+
+    pub fn tile_at(&self, coord: &HexCoord) -> Option<&Object> {
+        self.tiles().iter().find(|o| &o.coord == coord).copied()
+    }
+
+    pub fn piece_at(&self, coord: &HexCoord) -> Option<&Object> {
+        self.pieces().iter().find(|o| &o.coord == coord).copied()
+    }
+
+    pub fn get_as_mut(&mut self, object: &Object) -> Option<&mut Object> {
+        self.objects
+            .iter_mut()
+            .find(|o| o.props.oid == object.props.oid)
     }
 
     pub fn add_object(&mut self, object: Object) {
@@ -85,29 +127,41 @@ impl Board {
         self.objects.retain(|o| o.props.oid != object.props.oid);
     }
 
+    pub fn kill_piece_at(&mut self, coord: &HexCoord, status: Option<Status>) {
+        self.pieces_mut()
+            .iter_mut()
+            .filter(|p| &p.coord == coord)
+            .for_each(|p| p.set_killed(status.as_ref()))
+    }
+
+    pub fn kill_all_at(&mut self, coord: &HexCoord, status: Option<Status>) {
+        self.objects_mut()
+            .iter_mut()
+            .filter(|o| &o.coord == coord)
+            .for_each(|o| o.set_killed(status.as_ref()))
+    }
+
     pub fn is_empty(&self, coord: &HexCoord) -> bool {
-        self.tile_coords().contains(coord)
-            && self
-                .objects
-                .iter()
-                .all(|o| &o.coord != coord || o.props.dead)
+        match self.piece_at(coord) {
+            Some(p) => p.props.dead,
+            None => true,
+        }
     }
 
     pub fn contents(&self, coord: &HexCoord) -> Option<&Object> {
-        self.objects
+        self.pieces()
             .iter()
-            .find(|o| &o.coord == coord && !o.props.dead)
+            .find(|p| &p.coord == coord && !p.props.dead)
+            .cloned()
     }
 
     pub fn owner(&self, coord: &HexCoord) -> Option<Player> {
         self.contents(coord).map(|o| o.player)
     }
 
-    fn tile_coords(&self) -> Vec<HexCoord> {
-        self.tiles.iter().map(|t| t.coord).collect()
-    }
-
-    fn verify(tiles: &[Object], objects: &[Object]) {
+    fn verify(objects: &[Object]) {
+        let tiles: Vec<&Object> = objects.iter().filter(|o| o.is_tile()).collect();
+        let non_tiles: Vec<&Object> = objects.iter().filter(|o| !o.is_tile()).collect();
         let tile_coords: Vec<HexCoord> = tiles.iter().map(|t| t.coord).collect();
         let mut tcoords = HashSet::new();
         let mut ocoords = HashSet::new();
@@ -118,12 +172,12 @@ impl Board {
                 panic!("Duplicate tile coord: {:?}", t.coord);
             }
         });
-        objects.iter().for_each(|o| {
+        non_tiles.iter().for_each(|o| {
             if !ocoords.insert(o.coord) {
                 panic!("Duplicate object coord: {:?}", o.coord);
             }
         });
-        tiles.iter().chain(objects.iter()).for_each(|o| {
+        tiles.iter().chain(non_tiles.iter()).for_each(|o| {
             if !oids.insert(o.props.oid) {
                 panic!("Duplicate oid: oid={:?}", o.props.oid);
             }

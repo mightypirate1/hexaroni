@@ -1,5 +1,4 @@
 mod board;
-pub mod moves;
 mod objects;
 mod player;
 pub mod statuses;

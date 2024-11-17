@@ -118,12 +118,12 @@ impl Renderer {
         if let GameState::Playing {
             current_player,
             move_start,
+            ..
         } = game.game_state
         {
             // render hud
-            let time_remaining =
-                game.game_settings.play_move_timeout - move_start.elapsed().as_secs_f32();
-            let frac_remaining = time_remaining / game.game_settings.play_move_timeout;
+            let time_remaining = CONF.play_move_timeout - move_start.elapsed().as_secs_f32();
+            let frac_remaining = time_remaining / CONF.play_move_timeout;
             let flipped: f32 = if current_player == Player::A { 0. } else { 1. };
             gl_use_material(&self.hud_material);
             self.hud_material.set_uniform("canvas_size", screen_size());
@@ -151,11 +151,7 @@ impl Renderer {
                 Renderer::render_win(&winner, time);
             }
             GameState::Countdown { started_at } => {
-                Renderer::render_countdown(
-                    &started_at,
-                    game.game_settings.game_start_countdown,
-                    time,
-                );
+                Renderer::render_countdown(&started_at, CONF.game_start_countdown, time);
             }
             _ => {}
         }
@@ -170,13 +166,13 @@ impl Renderer {
         let screen_size = ScreenCoord::screen_size(game.board.size);
         let tile_renderables: Vec<Renderable> = game
             .board
-            .tiles
+            .tiles()
             .iter()
             .map(|t| Renderable::from_tile(t, control_status, screen_size, time))
             .collect();
-        let obj_renderables: Vec<Renderable> = game
+        let piece_renderables: Vec<Renderable> = game
             .board
-            .objects
+            .pieces()
             .iter()
             .map(|o| {
                 let as_active = game.current_player() == o.player;
@@ -185,7 +181,7 @@ impl Renderer {
             .collect();
         tile_renderables
             .iter()
-            .chain(&obj_renderables)
+            .chain(&piece_renderables)
             .sorted_by(|a, b| {
                 f32::total_cmp(
                     &(b.position - camera.position).length(),

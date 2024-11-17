@@ -88,6 +88,9 @@ impl ControlStatus {
         match &self.hovering {
             None => self.get_hovered_tile(game),
             Some(object) => {
+                if object.props.dead {
+                    return None;
+                }
                 let targetable_player = if self.action == MouseAction::None {
                     game.current_player()
                 } else {
@@ -104,10 +107,14 @@ impl ControlStatus {
     }
 
     fn get_hovered_object(&self, game: &GameController) -> Option<Object> {
-        match self.mouse_pos {
-            Some(coord) => game.get_object_at_pos(&coord),
-            None => None,
+        if let Some(coord) = self.mouse_pos {
+            if let Some(p) = game.get_piece_at_pos(&coord) {
+                if !p.props.dead {
+                    return Some(p);
+                }
+            }
         }
+        None
     }
 
     fn get_hovered_tile(&self, game: &GameController) -> Option<Object> {

@@ -11,6 +11,7 @@ pub enum GameState {
     Playing {
         current_player: Player,
         move_start: Instant,
+        move_nr: usize,
     },
     GameOver {
         winner: Player,
@@ -24,9 +25,14 @@ impl GameState {
 
     pub fn on_apply_move(&self) -> GameState {
         match self {
-            GameState::Playing { current_player, .. } => GameState::Playing {
+            GameState::Playing {
+                current_player,
+                move_nr,
+                ..
+            } => GameState::Playing {
                 current_player: current_player.opponent(),
                 move_start: Instant::now(),
+                move_nr: move_nr + 1,
             },
             _ => *self,
         }

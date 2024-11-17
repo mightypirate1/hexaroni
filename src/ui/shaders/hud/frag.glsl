@@ -25,12 +25,11 @@ float radial_factor(float x, float y) {
 
 float angular_factor(float x, float y) {
     float angle = M_PI + atan(y, x);
-    float f = 1.0; // 2.0 * flipped - 1.0;
     if (frac_remaining < 0.5) {
-        return float(f * angle / (4.0 * M_PI) < f * frac_remaining);
+        return float(angle / (4.0 * M_PI) < frac_remaining);
     }
     angle = 2 * M_PI - angle;
-    return float(f * angle / (4.0 * M_PI) < 1.0 - f * frac_remaining);
+    return float(angle / (4.0 * M_PI) < 1.0 - frac_remaining);
 }
 
 void main() {

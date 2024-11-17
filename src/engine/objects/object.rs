@@ -1,3 +1,4 @@
+use crate::config::CONF;
 use crate::engine::{
     objects::ObjectProps,
     statuses::{Effect, Status, StatusType},
@@ -55,13 +56,10 @@ impl Object {
                 apply: Some(Box::new(StatusType::Falling)),
                 duration: Some(2.0),
             },
-            lifespan - 2,
+            lifespan - CONF.falling_tiles_heads_up,
             Effect::SetStatus {
                 object: tile.clone(),
-                stype: Box::new(StatusType::Wobble {
-                    amplitude: 0.2,
-                    speed: 37.1,
-                }),
+                stype: Box::new(CONF.falling_tiles_indicator.clone()),
                 duration: None,
             },
         ));

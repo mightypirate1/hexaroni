@@ -21,6 +21,7 @@ pub struct Config {
     pub render_scale: f32,
     pub falling_tiles_heads_up: usize,
     pub falling_tiles_indicator: StatusType,
+    pub dasher_can_fly: bool,
 }
 
 impl Default for Config {
@@ -54,6 +55,7 @@ impl Default for Config {
                 amplitude: 0.2,
                 speed: 37.1,
             },
+            dasher_can_fly: false,
         }
     }
 }

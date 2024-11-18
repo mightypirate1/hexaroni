@@ -1,3 +1,4 @@
+use crate::config::CONF;
 use crate::engine::statuses::Effect;
 use crate::engine::{Board, Object, ObjectType, Player};
 use crate::geometry::HexCoord;
@@ -95,7 +96,7 @@ fn dasher_moves(object: &Object, board: &Board) -> Vec<Move> {
             match next_tile {
                 Some(next) => {
                     if tile_available_for_step(&next, board, Some(obj.player.opponent()))
-                        || board.tile_at(&next).is_none()
+                        || CONF.dasher_can_fly && board.tile_at(&next).is_none()
                     {
                         if let Some(target) = board.contents(&next) {
                             effects.push(Effect::Kill {

@@ -1,5 +1,5 @@
 use crate::engine::statuses::Effect;
-use crate::engine::{Board, Object, ObjectType};
+use crate::engine::{Board, Object, ObjectType, Player};
 use crate::geometry::HexCoord;
 
 #[derive(Debug, Clone)]
@@ -57,9 +57,7 @@ fn jumper_moves(object: &Object, board: &Board) -> Vec<Move> {
             Some(inter) => {
                 let hook_dir = (dir + if clockw { 1 } else { 5 }) % 6;
                 if let Some(target) = inter.get_neighbor(hook_dir, 1) {
-                    if board.is_empty(&target)
-                        || board.owner(&target) == Some(obj.player.opponent())
-                    {
+                    if tile_available_for_step(&target, board, Some(obj.player.opponent())) {
                         return Some(create_move(obj, target, &inter, board));
                     }
                 }
@@ -93,24 +91,25 @@ fn dasher_moves(object: &Object, board: &Board) -> Vec<Move> {
         let mut effects = vec![];
         while let Some(c) = curr {
             path.push(c);
-            let next = c.get_neighbor(*dir, 1);
-            match next {
-                Some(n) => {
-                    if let Some(next_tile_owner) = board.owner(&n) {
-                        if next_tile_owner != obj.player.opponent() && !obj.props.dead {
-                            break;
+            let next_tile = c.get_neighbor(*dir, 1);
+            match next_tile {
+                Some(next) => {
+                    if tile_available_for_step(&next, board, Some(obj.player.opponent()))
+                        || board.tile_at(&next).is_none()
+                    {
+                        if let Some(target) = board.contents(&next) {
+                            effects.push(Effect::Kill {
+                                victim: target.clone(),
+                                killer: Some(obj.clone()),
+                            });
                         }
-                    }
-                    if let Some(target) = board.contents(&n) {
-                        effects.push(Effect::Kill {
-                            victim: target.clone(),
-                            killer: Some(obj.clone()),
-                        });
+                    } else {
+                        break;
                     }
                 }
                 None => break,
             }
-            curr = next;
+            curr = next_tile;
         }
         (path, effects)
     }
@@ -122,4 +121,34 @@ fn dasher_moves(object: &Object, board: &Board) -> Vec<Move> {
         .filter(|(p, _)| p.len() > 1)
         .map(|(p, es)| create_move(p, object, es))
         .collect()
+}
+
+/**
+tells if a tile is:
+- existing
+- empty (or has the tolerated player)
+- not dead
+*/
+fn tile_available_for_step(
+    tile_coord: &HexCoord,
+    board: &Board,
+    tolerated_player: Option<Player>,
+) -> bool {
+    // false if tile is dead, or non-existant
+    match board.tile_at(tile_coord) {
+        Some(tile) => {
+            if tile.props.dead {
+                return false;
+            }
+        }
+        None => return false,
+    }
+    // true if the tile contains no piece, or a piece owned by the tolerated player
+    match tolerated_player {
+        Some(tolerated) => board
+            .piece_at(tile_coord)
+            .map(|p| p.owned_by(&tolerated))
+            .unwrap_or_else(|| true),
+        None => true,
+    }
 }

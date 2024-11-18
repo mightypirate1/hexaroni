@@ -32,12 +32,15 @@ impl Board {
         let board_size = 7;
         let tiles: Vec<Object> = (0..board_size)
             .flat_map(move |x| {
+                fn delay(x: usize) -> usize {
+                    ((33.0 * x.abs_diff(3) as f32) / 7.0).round() as usize
+                }
                 (0..board_size).map(move |y| {
                     let coord = HexCoord::new(x, y, board_size);
                     let lifespan = if x.abs_diff(3) + y.abs_diff(3) < 2 {
-                        7 + 3 * x.abs_diff(3) + 3 * y.abs_diff(3)
+                        15 + 3 * x.abs_diff(3) + 3 * y.abs_diff(3)
                     } else {
-                        21 - x.abs_diff(3) - y.abs_diff(3)
+                        52 - delay(x) - delay(y)
                     };
                     Object::new_tile(y * board_size + x, coord, lifespan)
                 })

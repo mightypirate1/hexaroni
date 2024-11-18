@@ -77,7 +77,7 @@ fn status_matrix(status: &Status, time: f32) -> Mat4 {
             let start_time = status.start_time.expect("falling without start_time");
             const DOWN: Vec3 = vec3(0.0, 0.0, 1.0);
             let t = time - start_time;
-            Mat4::from_translation(screen_height() * DOWN * t * t)
+            Mat4::from_translation(DOWN * t * t)
         }
         _ => panic!("no status matrix implemented for {:?}", status),
     }

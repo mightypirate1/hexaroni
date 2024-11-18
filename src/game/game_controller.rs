@@ -131,13 +131,6 @@ impl GameController {
         }
     }
 
-    pub fn screen_size(&self) -> f32 {
-        f32::min(
-            0.33 * screen_width() / self.board.size as f32,
-            0.58 * screen_height() / (1 + self.board.size) as f32,
-        )
-    }
-
     fn tick_objects(&mut self, move_nr: usize, time: f32) -> Vec<Effect> {
         self.board
             .objects_mut()
@@ -205,14 +198,13 @@ impl GameController {
      * Gets the closest object out of the ones that are closer than the size of the object
      */
     fn get_close_from_vec(&self, pos: &ScreenCoord, objects: &[&Object]) -> Option<Object> {
-        let screen_size = self.screen_size();
         let with_distances: Vec<(&Object, f32)> = objects
             .iter()
             .map(|o| (*o, pos.dist_from(&o.get_screen_coord())))
             .collect();
         let detection = with_distances
             .iter()
-            .filter(|(o, d)| *d < screen_size * o.props.size)
+            .filter(|(o, d)| *d < o.props.size)
             .sorted_by(|(_, d1), (_, d2)| f32::total_cmp(d1, d2))
             .map(|(o, _)| *o)
             .next();

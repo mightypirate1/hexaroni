@@ -57,15 +57,9 @@ pub fn hud_quad(x0: f32, y0: f32, x1: f32, y1: f32) -> Mesh {
     }
 }
 
-pub fn tile_hex_mesh(
-    tile: &Object,
-    color: &Vec4,
-    as_highlighted: bool,
-    screen_size: f32,
-    time: f32,
-) -> Renderable {
+pub fn tile_hex_mesh(tile: &Object, color: &Vec4, as_highlighted: bool, time: f32) -> Renderable {
     let model_matrix = transforms::create_model_matrix(tile, time);
-    let size = tile.props.size * screen_size;
+    let size = tile.props.size;
     let d = 0.86602;
     let thickness = 0.2 * size;
     let glow = if as_highlighted { 1.0 } else { 0.0 };
@@ -129,11 +123,10 @@ pub fn obj_wall_mesh(
     object: &Object,
     object_color: &Vec4,
     player_color: &Vec4,
-    screen_size: f32,
     time: f32,
 ) -> Renderable {
     let model_matrix = transforms::create_model_matrix(object, time);
-    let size = screen_size * object.props.size;
+    let size = object.props.size;
     let d = 0.71;
 
     let position = model_matrix.project_point3(vec3(0.0, 0.0, 0.0));
@@ -187,11 +180,10 @@ pub fn obj_jumper_mesh(
     object_color: &Vec4,
     player_color: &Vec4,
     as_active: bool,
-    screen_size: f32,
     time: f32,
 ) -> Renderable {
     let model_matrix = transforms::create_model_matrix(object, time);
-    let size = screen_size * object.props.size;
+    let size = object.props.size;
     let t = 0.25 * 3.0_f32.sqrt();
     let d = 0.5 / 3.0_f32.sqrt();
 
@@ -231,11 +223,10 @@ pub fn obj_dasher_mesh(
     object_color: &Vec4,
     player_color: &Vec4,
     as_active: bool,
-    screen_size: f32,
     time: f32,
 ) -> Renderable {
     let model_matrix = transforms::create_model_matrix(object, time);
-    let size = screen_size * object.props.size;
+    let size = object.props.size;
     let d = 0.4;
 
     let position = model_matrix.project_point3(vec3(0.0, 0.0, 0.0));

@@ -48,7 +48,7 @@ impl Default for Config {
             tile_possible_move_color: SKYBLUE.to_vec(),
             camera_up: vec3(0.0, 0.0, 1.0),
             camera_target: vec3(0.0, 0.0, 0.0),
-            camera_position: -vec3(-50.0, -150.0, 1000.0),
+            camera_position: -vec3(-0.5, -1.5, 10.0),
             render_scale: 1.0,
             falling_tiles_heads_up: 2,
             falling_tiles_indicator: StatusType::Wobble {

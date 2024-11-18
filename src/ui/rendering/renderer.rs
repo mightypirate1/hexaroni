@@ -1,7 +1,6 @@
 use crate::config::CONF;
 use crate::engine::Player;
 use crate::game::{GameController, GameState};
-use crate::geometry::ScreenCoord;
 use crate::ui::rendering::meshes::hud_quad;
 use crate::ui::{control::ControlStatus, rendering::Renderable};
 use itertools::Itertools;
@@ -163,12 +162,11 @@ impl Renderer {
         control_status: &ControlStatus,
         time: f32,
     ) {
-        let screen_size = ScreenCoord::screen_size(game.board.size);
         let tile_renderables: Vec<Renderable> = game
             .board
             .tiles()
             .iter()
-            .map(|t| Renderable::from_tile(t, control_status, screen_size, time))
+            .map(|t| Renderable::from_tile(t, control_status, time))
             .collect();
         let piece_renderables: Vec<Renderable> = game
             .board
@@ -176,7 +174,7 @@ impl Renderer {
             .iter()
             .map(|o| {
                 let as_active = game.current_player() == o.player;
-                Renderable::from_object(o, as_active, screen_size, time)
+                Renderable::from_object(o, as_active, time)
             })
             .collect();
         tile_renderables

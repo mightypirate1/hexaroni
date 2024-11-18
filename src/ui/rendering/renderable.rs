@@ -10,12 +10,7 @@ pub struct Renderable {
 }
 
 impl Renderable {
-    pub fn from_tile(
-        tile: &Object,
-        control_status: &ControlStatus,
-        screen_size: f32,
-        time: f32,
-    ) -> Renderable {
+    pub fn from_tile(tile: &Object, control_status: &ControlStatus, time: f32) -> Renderable {
         let mut as_highlighted = false;
         let mut color = CONF.tile_base_color;
         if let Some(drag) = &control_status.dragging {
@@ -35,38 +30,21 @@ impl Renderable {
                 as_highlighted = true;
             }
         }
-        meshes::tile_hex_mesh(tile, &color, as_highlighted, screen_size, time)
+        meshes::tile_hex_mesh(tile, &color, as_highlighted, time)
     }
 
-    pub fn from_object(
-        object: &Object,
-        as_active: bool,
-        screen_size: f32,
-        time: f32,
-    ) -> Renderable {
+    pub fn from_object(object: &Object, as_active: bool, time: f32) -> Renderable {
         let player_color = CONF.player_color.get(&object.player).unwrap();
         let object_color = CONF.object_color.get(&object.otype).unwrap();
 
         match object.otype {
-            ObjectType::Wall => {
-                meshes::obj_wall_mesh(object, player_color, player_color, screen_size, time)
+            ObjectType::Wall => meshes::obj_wall_mesh(object, player_color, player_color, time),
+            ObjectType::Dasher => {
+                meshes::obj_dasher_mesh(object, object_color, player_color, as_active, time)
             }
-            ObjectType::Dasher => meshes::obj_dasher_mesh(
-                object,
-                object_color,
-                player_color,
-                as_active,
-                screen_size,
-                time,
-            ),
-            ObjectType::Jumper => meshes::obj_jumper_mesh(
-                object,
-                object_color,
-                player_color,
-                as_active,
-                screen_size,
-                time,
-            ),
+            ObjectType::Jumper => {
+                meshes::obj_jumper_mesh(object, object_color, player_color, as_active, time)
+            }
             _ => panic!("bad thing happen"),
         }
     }

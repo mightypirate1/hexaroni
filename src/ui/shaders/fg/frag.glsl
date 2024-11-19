@@ -13,15 +13,26 @@ varying vec3 v_frag_to_cam;
 
 vec4 raw_color(vec4 color, float height, float center_dist) {
     // lid shade
-    float clamp_val = 0.8 + 0.1 * frag_glow;
-    float lid_shade = clamp(center_dist, clamp_val, 1.0);
-    lid_shade = (lid_shade - 0.4) / (clamp_val);
+    float clamp_val = 0.2;
+    float lid_shade = clamp(1.0 - center_dist, 0.0, clamp_val);
+    lid_shade = (lid_shade) / (clamp_val);
     // side shade
     float side_shade = height;
     side_shade += max(height, 0.7) - 0.7;
-    vec3 shaded = lid_shade * side_shade * color.rgb;
+    vec3 shaded = max(frag_glow, lid_shade) * side_shade * color.rgb;
     return vec4(shaded, 1.0);
 }
+// vec4 raw_color(vec4 color, float height, float center_dist) {
+//     // lid shade
+//     float clamp_val = max(0.7, frag_glow);
+//     float lid_shade = clamp(center_dist, clamp_val, 1.0);
+//     lid_shade = (lid_shade - 0.5) / (clamp_val);
+//     // side shade
+//     float side_shade = height;
+//     side_shade += max(height, 0.7) - 0.7;
+//     vec3 shaded = lid_shade * side_shade * color.rgb;
+//     return vec4(shaded, 1.0);
+// }
 
 vec4 base_color() {
     float height = frag_uv.y;
@@ -58,8 +69,8 @@ void main() {
 
     vec4 color = base_color();
     float c_ambient = 0.6 + 0.2 * frag_glow;
-    float c_diffuse = 1.6 * diffuse_weight(normal, to_light);
-    float c_specular = 0.025 * specular_weight(normal, to_light, to_cam, 8.0);
+    float c_diffuse = 2.6 * diffuse_weight(normal, to_light);
+    float c_specular = 0.025 * specular_weight(normal, to_light, to_cam, 1.0);
 
     vec3 shaded_color = color.rgb * (c_ambient + c_diffuse);
     vec3 specular_color = (1 - 0.8 * frag_glow) * c_specular * vec3(1);

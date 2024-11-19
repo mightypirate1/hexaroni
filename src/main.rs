@@ -1,13 +1,13 @@
 use hexaroni::config::CONF;
 use hexaroni::engine::statuses::StatusType;
 use hexaroni::game::GameController;
-use hexaroni::geometry::ScreenCoord;
 use hexaroni::ui::{
     control::{ControlStatus, KbdAction, MouseAction},
     rendering::Renderer,
     Drag,
 };
 use macroquad::prelude::*;
+use miniquad::window::screen_size;
 use std::time::Instant;
 
 fn window_conf() -> Conf {
@@ -24,7 +24,7 @@ async fn main() {
     let mut game = GameController::new();
     let mut control_status = ControlStatus::default();
     let mut renderer = Renderer::new().unwrap();
-    let mut curr_window_size = ScreenCoord::screen_size(game.board.size);
+    let mut curr_window_size = screen_size();
     let camera_up = CONF.camera_up;
     let camera_target = CONF.camera_target;
     let mut camera_position = CONF.camera_position;
@@ -32,12 +32,12 @@ async fn main() {
 
     loop {
         // recreate shader on resize
-        if curr_window_size != ScreenCoord::screen_size(game.board.size) {
+        if curr_window_size != screen_size() {
             match Renderer::new() {
                 Ok(r) => renderer = r,
                 Err(msg) => println!("{}", msg),
             };
-            curr_window_size = ScreenCoord::screen_size(game.board.size);
+            curr_window_size = screen_size();
         }
 
         // update control, camera, and game state

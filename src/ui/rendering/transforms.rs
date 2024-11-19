@@ -50,12 +50,12 @@ fn status_matrix(status: &Status, time: f32) -> Mat4 {
         StatusType::Killed { knockback } => {
             let start_time = status.start_time.expect("killed without start_time");
             let duration = status.duration.expect("killed without duration");
-            let progress = (time - start_time) / duration;
-            let heaven = vec3(0.0, 0.0, -screen_height());
-            let translation = heaven + knockback;
+            let progress = ((time - start_time) / duration).clamp(0.0, 1.0);
+            let heaven = vec3(0.0, 0.0, -7.0);
+            let translation = heaven + 1.5 * knockback;
             Mat4::from_translation(progress * translation)
         }
-        StatusType::Move { from, to } => {
+        StatusType::Move { from, to, height } => {
             /*
                 since every object will eventually eventually be translated
                 to their position, we will subtract the destination here.
@@ -65,19 +65,19 @@ fn status_matrix(status: &Status, time: f32) -> Mat4 {
             */
             let start_time = status.start_time.expect("move without start_time");
             let duration = status.duration.expect("move without duration");
-            let progress = (time - start_time) / duration;
+            let progress = ((time - start_time) / duration).clamp(0.0, 1.0);
             let src = from.as_vec();
             let dst = to.as_vec();
             let target = src - dst + progress * (dst - src);
-            let jump = f32::sin(std::f32::consts::PI * progress)
-                * vec3(0.0, 0.0, -0.3 * (dst - src).length());
+            let jump = progress * (progress - 1.0) * vec3(0.0, 0.0, height) * (dst - src).length();
             Mat4::from_translation(target + jump)
         }
         StatusType::Falling => {
             let start_time = status.start_time.expect("falling without start_time");
             const DOWN: Vec3 = vec3(0.0, 0.0, 1.0);
             let t = time - start_time;
-            Mat4::from_translation(screen_height() * DOWN * t * t)
+            let g = 2.7;
+            Mat4::from_translation(g * DOWN * t * t)
         }
         _ => panic!("no status matrix implemented for {:?}", status),
     }

@@ -14,6 +14,8 @@ pub enum Effect {
     Kill {
         victim: Object,
         killer: Option<Object>,
+        /// at what stage of the move-animation the kill occurs
+        animation_delay_frac: Option<f32>,
     },
     KillAallOn {
         coord: HexCoord,
@@ -34,7 +36,11 @@ impl Effect {
     */
     pub fn applying_status(&self, time: f32) -> Option<Status> {
         match self {
-            Effect::Kill { victim, killer } => {
+            Effect::Kill {
+                victim,
+                killer,
+                animation_delay_frac,
+            } => {
                 let knockback = if let Some(k) = killer {
                     let killer_coord = ScreenCoord::from_hexcoord(&k.coord);
                     let obj_coord = ScreenCoord::from_hexcoord(&victim.coord);
@@ -42,7 +48,9 @@ impl Effect {
                 } else {
                     vec3(0.0, 0.0, 0.0)
                 };
-                let status = Status::new_killed(knockback, time, CONF.kill_duration);
+                let duration = CONF.kill_duration;
+                let start_time = time + duration * animation_delay_frac.unwrap_or(0.0);
+                let status = Status::new_killed(knockback, start_time, duration);
                 Some(status)
             }
             Effect::KillAallOn {

@@ -21,6 +21,7 @@ pub struct Config {
     pub render_scale: f32,
     pub falling_tiles_heads_up: usize,
     pub falling_tiles_indicator: StatusType,
+    pub dasher_can_fly: bool,
 }
 
 impl Default for Config {
@@ -41,19 +42,20 @@ impl Default for Config {
             play_move_timeout: 5.0,
             move_application_time: 0.25,
             kill_duration: 0.4,
-            tile_base_color: vec4(0.1, 0.1, 0.1, 1.0),
+            tile_base_color: vec4(0.03, 0.03, 0.03, 1.0),
             tile_dragged_from_color: RED.to_vec(),
             tile_targeted_color: RED.to_vec(),
-            tile_possible_move_color: SKYBLUE.to_vec(),
+            tile_possible_move_color: 0.5 * SKYBLUE.to_vec(),
             camera_up: vec3(0.0, 0.0, 1.0),
             camera_target: vec3(0.0, 0.0, 0.0),
-            camera_position: -vec3(-50.0, -150.0, 1000.0),
+            camera_position: -vec3(-0.5, -1.5, 10.0),
             render_scale: 1.0,
             falling_tiles_heads_up: 2,
             falling_tiles_indicator: StatusType::Wobble {
                 amplitude: 0.2,
                 speed: 37.1,
             },
+            dasher_can_fly: false,
         }
     }
 }

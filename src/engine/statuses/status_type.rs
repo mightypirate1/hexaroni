@@ -15,6 +15,7 @@ pub enum StatusType {
     Move {
         from: ScreenCoord,
         to: ScreenCoord,
+        height: f32,
     },
     Wobble {
         amplitude: f32,

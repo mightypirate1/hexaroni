@@ -1,7 +1,7 @@
 use crate::config::CONF;
 use crate::engine::{
     statuses::{Effect, Status},
-    Board, Object, Player,
+    Board, Object, ObjectType, Player,
 };
 use crate::game::moves::Move;
 use crate::geometry::{HexCoord, ScreenCoord};
@@ -141,11 +141,17 @@ impl GameController {
 
     fn move_to(&mut self, object: &Object, to: &HexCoord, time: f32, duration: f32) {
         if let Some(obj) = self.board.get_as_mut(object) {
+            let height = if obj.otype == ObjectType::Jumper {
+                0.5
+            } else {
+                0.0
+            };
             obj.statuses.push(Status::new_move(
                 ScreenCoord::from_hexcoord(&obj.coord),
                 ScreenCoord::from_hexcoord(to),
                 time,
                 duration,
+                height,
             ));
             obj.set_coord(to);
         }

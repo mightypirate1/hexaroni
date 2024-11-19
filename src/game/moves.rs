@@ -1,7 +1,7 @@
 use crate::config::CONF;
 use crate::engine::statuses::Effect;
 use crate::engine::{Board, Object, ObjectType, Player};
-use crate::geometry::HexCoord;
+use crate::geometry::{HexCoord, ScreenCoord};
 
 #[derive(Debug, Clone)]
 pub struct Move {
@@ -43,6 +43,7 @@ fn jumper_moves(object: &Object, board: &Board) -> Vec<Move> {
                     vec![Effect::Kill {
                         victim: t.clone(),
                         killer: Some(obj.clone()),
+                        animation_delay_frac: Some(0.45),
                     }]
                 } else {
                     vec![]
@@ -86,10 +87,19 @@ fn dasher_moves(object: &Object, board: &Board) -> Vec<Move> {
     fn create_move(path: Vec<HexCoord>, obj: &Object, effects: Vec<Effect>) -> Move {
         Move::new(obj.clone(), path, effects)
     }
+    fn delay_frac(start: &HexCoord, end: &HexCoord, victim_coord: &HexCoord) -> f32 {
+        let a = ScreenCoord::from_hexcoord(start);
+        let b = ScreenCoord::from_hexcoord(victim_coord);
+        let c = ScreenCoord::from_hexcoord(end);
+        let full_dist = a.dist_from(&c);
+        let victim_dist = a.dist_from(&b);
+        0.65 * victim_dist / full_dist
+    }
+
     fn create_path(obj: &Object, dir: &usize, board: &Board) -> (Vec<HexCoord>, Vec<Effect>) {
         let mut path = vec![];
         let mut curr = Some(obj.coord);
-        let mut effects = vec![];
+        let mut victims_and_coords = vec![];
         while let Some(c) = curr {
             path.push(c);
             let next_tile = c.get_neighbor(*dir, 1);
@@ -98,11 +108,8 @@ fn dasher_moves(object: &Object, board: &Board) -> Vec<Move> {
                     if tile_available_for_step(&next, board, Some(obj.player.opponent()))
                         || CONF.dasher_can_fly && board.tile_at(&next).is_none()
                     {
-                        if let Some(target) = board.contents(&next) {
-                            effects.push(Effect::Kill {
-                                victim: target.clone(),
-                                killer: Some(obj.clone()),
-                            });
+                        if let Some(victim) = board.contents(&next) {
+                            victims_and_coords.push((victim, next));
                         }
                     } else {
                         break;
@@ -112,6 +119,15 @@ fn dasher_moves(object: &Object, board: &Board) -> Vec<Move> {
             }
             curr = next_tile;
         }
+        let effects = victims_and_coords
+            .iter()
+            .map(|(v, c)| Effect::Kill {
+                victim: (*v).clone(),
+                killer: Some(obj.clone()),
+                animation_delay_frac: Some(delay_frac(&obj.coord, path.last().unwrap(), c)),
+            })
+            .collect();
+
         (path, effects)
     }
     object

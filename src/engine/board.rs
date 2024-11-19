@@ -37,11 +37,7 @@ impl Board {
                 }
                 (0..board_size).map(move |y| {
                     let coord = HexCoord::new(x, y, board_size);
-                    let lifespan = if x.abs_diff(3) + y.abs_diff(3) < 2 {
-                        15 + 3 * x.abs_diff(3) + 3 * y.abs_diff(3)
-                    } else {
-                        52 - delay(x) - delay(y)
-                    };
+                    let lifespan = 48 - delay(x) - delay(y);
                     Object::new_tile(y * board_size + x, coord, lifespan)
                 })
             })

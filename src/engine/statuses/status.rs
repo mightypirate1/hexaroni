@@ -18,9 +18,15 @@ impl Status {
         }
     }
 
-    pub fn new_move(from: ScreenCoord, to: ScreenCoord, start_time: f32, duration: f32) -> Self {
+    pub fn new_move(
+        from: ScreenCoord,
+        to: ScreenCoord,
+        start_time: f32,
+        duration: f32,
+        height: f32,
+    ) -> Self {
         Status {
-            stype: StatusType::Move { from, to },
+            stype: StatusType::Move { from, to, height },
             start_time: Some(start_time),
             duration: Some(duration),
         }
